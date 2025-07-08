@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>QuAlify</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- 上部ヘッダー -->
+  <header class="app-header">QuAlify</header>
+
+  <!-- メインアプリレイアウト -->
+  <div class="app-container">
+    
+    <!-- サイドバー -->
+    <aside class="sidebar">
+      <ul>
+        <li class="tab active" data-tab="wordTab">単語の管理</li>
+        <li class="tab" data-tab="promptTab">プロンプト編集</li>
+      </ul>
+    </aside>
+
+    <!-- メインコンテンツ -->
+    <main class="page-container">
+      
+      <!-- タブ1: 単語 -->
+      <div id="wordTab" class="tab-content active">
+        <h2>単語の登録</h2>
+
+        <div style="margin-bottom: 20px;">
+          <input id="wordInput" type="text" placeholder="例: RAID, プロトコル" />
+          <input id="tagInput" type="text" list="tagList" placeholder="タグ（任意）" />
+          <datalist id="tagList"></datalist>
+          <button onclick="addWord()">登録</button>
+        </div>
+
+        <fieldset class="control-section">
+          <div id="tagFilterContainer">
+            <strong>絞り込み：</strong>
+            <div id="tagCheckboxes"></div>
+          </div>
+          <div style="margin-top: 10px;">
+            <label for="sortSelect"><strong>並べ替え：</strong></label><br>
+            <select id="sortSelect" style="margin-top: 5px;">
+              <option value="id">登録順（新しい順）</option>
+              <option value="tag">タグ順</option>
+              <option value="proficiency">習熟度が低い順</option>
+            </select>
+          </div>
+        </fieldset>
+
+        <div id="mainContentWrapper">
+          <div id="wordListContainer">
+            <h2>登録した単語</h2>
+            <div id="wordList"></div>
+            <div id="questionText" style="margin-top: 20px; color: red;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- タブ2: プロンプト -->
+      <div id="promptTab" class="tab-content" style="display: none;">
+        <div class="layout">
+
+          <!-- 左側：プロンプト入力＋リスト -->
+          <div class="main-column">
+            <h2>プロンプト作成</h2>
+            <input id="promptTitleInput" type="text" placeholder="プロンプトタイトル" class="prompt-input" />
+            <textarea id="promptContentInput" placeholder="プロンプト内容" rows="6" class="prompt-input"></textarea>
+
+            <div class="form-actions">
+              <button onclick="createPrompt()">新規作成</button>
+            </div>
+
+            <h2>登録済みのプロンプト</h2>
+            <div id="promptList"></div>
+          </div>
+
+          <!-- 右側：チャット欄 -->
+          <div class="chat-column">
+            <h2>プロンプト修正</h2>
+            <div id="chatSection">
+              <div id="chatPrompt"></div>
+              <div id="chatLog">
+              </div>
+              <textarea id="chatInput" placeholder="ここに修正要望を入力してください..."></textarea>
+              <button id="chatSendBtn" onclick="sendChatMessage()">送信</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="main.js"></script>
+
+  <script>
+    // タブ切り替え機能
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+
+      const selectedTab = document.querySelector(`.tab[data-tab="${tabName}"]`);
+      const selectedContent = document.getElementById(tabName);
+      if (selectedTab && selectedContent) {
+        selectedTab.classList.add('active');
+        selectedContent.style.display = 'block';
+        localStorage.setItem('currentTab', tabName);
+      }
+    }
+
+    // 初期設定
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTab = localStorage.getItem('currentTab') || 'wordTab';
+      switchTab(savedTab);
+    });
+  </script>
+
+</body>
+</html>

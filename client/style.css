@@ -1,0 +1,392 @@
+/* === 全体共通 === */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f5f7fa;
+  color: #333;
+}
+
+/* === ヘッダーとレイアウト構成 === */
+.app-header {
+  background-color: #4a8ca8;
+  color: white;
+  font-size: 30px;
+  padding: 20px 36px;
+  font-weight: bold;
+}
+
+.app-container {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* サイドバー高さ100%固定にする */
+.sidebar {
+  width: 220px;
+  background-color: #f1f1f1;
+  padding: 20px;
+  box-sizing: border-box;
+  min-height: inherit;
+}
+
+/* 中央寄せ＆最大幅制限は右側のコンテンツだけ */
+.page-container {
+  flex: 1;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar .tab {
+  cursor: pointer;
+  padding: 10px;
+  margin-bottom: 8px;
+  background-color: #f1f1f1;
+  border-radius: 5px;
+  font-weight: bold;
+  color: #333;
+  transition: background-color 0.2s;
+}
+
+.sidebar .tab:hover {
+  background-color: #d5d5d5;
+}
+
+.sidebar .tab.active {
+  background-color: #d0d0d0;
+  color: #000;
+}
+
+.sidebar li {
+  padding: 10px 20px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #333;
+}
+
+.sidebar li.active {
+  background-color: #cfd8dc;
+  color: #000;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* === コンテンツデザイン === */
+
+h1, h2 {
+  color: #2c3e50;
+}
+
+input[type="text"] {
+  padding: 8px;
+  font-size: 16px;
+  width: 250px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  margin-top: 5px;
+  margin-left: 8px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #2980b9;
+}
+
+/* === 単語の管理画面 === */
+
+#questionArea {
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  padding: 16px;
+  margin-top: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#questionText {
+  margin-bottom: 12px;
+}
+
+ul#wordList {
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+ul#wordList li {
+  margin-bottom: 6px;
+}
+
+#wordList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.control-section {
+  border: 1px solid #ccc;
+  background-color: #fdfdfd;
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.control-section legend {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.term-row {
+  display: grid;
+  grid-template-columns: 2fr 2fr 2fr auto;
+  align-items: center;
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.term-word {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.term-tag {
+  background-color: #eef;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #3366cc;
+  display: inline-block;
+  width: fit-content;
+  max-width: max-content;
+  white-space: nowrap;
+}
+
+.term-proficiency {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.term-action button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.term-action button:hover {
+  background-color: #2980b9;
+}
+
+#mainContentWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.question-bubble {
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 5px;
+  position: relative;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.question-bubble::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 40px;
+  border-width: 0 10px 10px 10px;
+  border-style: solid;
+  border-color: transparent transparent #f9f9f9 transparent;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* === プロンプト編集画面 === */
+/* プロンプト編集の3カラムレイアウト用 */
+.layout {
+  display: flex;
+  height: 100vh;
+  align-items: flex-start;
+}
+
+.main-column {
+  flex: 2;
+  padding: 16px;
+  border-right: 1px solid #ccc;
+  overflow-y: auto;
+}
+
+.chat-column {
+  flex: 1.5;
+  padding: 16px;
+  background-color: #f9f9f9;
+  overflow-y: auto;
+  border-left: 1px solid #ccc;
+}
+
+#chatSection {
+  width: 100%;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  padding: 16px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 750px;
+  box-sizing: border-box;
+}
+
+#chatLog {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  background-color: #f4f4f4;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* プロンプト作成部分 */
+.prompt-input {
+  display: block;
+  width: 100%;
+  max-width: 800px;
+  box-sizing: border-box;
+  font-size: 16px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+textarea.prompt-input {
+  resize: none;
+  line-height: 1.6;
+  font-family: inherit;
+}
+
+/* 新規作成ボタンのコンテナ */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  max-width: 800px;
+  margin-top: 12px;
+}
+
+/* プロンプト一覧部分 */
+.prompt-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 800px;
+  padding: 12px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  box-sizing: border-box;
+  margin-bottom: 16px;
+}
+
+.prompt-box.selected {
+  border: 2px solid black;
+}
+
+/* チャット部分 */
+.chat-bubble {
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  max-width: 80%;
+  position: relative;
+  font-size: 14px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chat-bubble::after {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 10px;
+  border-width: 10px;
+  border-style: solid;
+  border-color: transparent #ffffff transparent transparent;
+}
+
+.chat-bubble .fa-trash {
+  position: absolute;
+  bottom: 10px;
+  right: 40px;
+  color: #999;
+  transition: color 0.2s;
+  margin-left: 3px;
+  cursor: pointer;
+}
+
+.chat-bubble .fa-trash:hover {
+  color: red;
+}
+
+#chatInput {
+  resize: none;
+  height: 60px;
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-family: inherit;
+}
+
+#chatSendBtn {
+  align-self: flex-end;
+  padding: 8px 16px;
+}
