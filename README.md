@@ -12,7 +12,7 @@
 ## バージョン情報
 本プログラムは2024年1月～2024年2月にかけて初期版を作成。
 
-・Ver1.0：制作した初期版を公開 (2025.06.30)
+・Ver1.0：制作した初期版を公開 (2025.07.08)
 
 ## セットアップ
 0. node.jsのインストール
@@ -23,7 +23,7 @@
 5. サーバー起動 (serverディレクトリ上で) `node app.js`
 
 ### 2. 依存モジュールのインストール
-`npm install express cors dotenv better-sqlite3 @google/generative-ai marked langchain@0.1.14 @langchain/core`
+`npm install express cors dotenv better-sqlite3 @google/generative-ai marked langchain@0.1.14 @langchain/core langchain zod`
 
 ### 3. VSCode拡張機能のインストール
 ・Live Server By Ritwick Dey  
