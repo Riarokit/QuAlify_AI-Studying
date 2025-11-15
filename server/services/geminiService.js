@@ -1,19 +1,16 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('../db');
 const { z } = require('zod');
-const { StructuredOutputParser } = require('langchain/output_parsers');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const parser = StructuredOutputParser.fromZodSchema(
-  z.object({
+const schema = z.object({
     question: z.string().describe("問題文と選択肢"),
     explanation: z.string().describe("問題に対する解説")
-  })
-);
+});
 
 async function generateQuestion(word) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
   // プロンプト取得
   const setting = db.prepare('SELECT value FROM settings WHERE key = ?').get('current_prompt_id');
@@ -27,14 +24,23 @@ async function generateQuestion(word) {
     ? `以下の追加指示も考慮してください：\n${logs.map(l => `・${l.message}`).join('\n')}`
     : '';
 
-  // プロンプトを文字列結合で構築
+  // JSON形式の出力指示
+  const formatInstructions = `以下の形式のJSONで出力してください:
+{
+  "question": "○○に関する問題文と選択肢をここに記述",
+  "explanation": "その解説をここに記述"
+}`;
+
+  // プロンプト構築
   const prompt = `
 ${promptTemplate}
 
+語句：「${word}」
+
 ${instructionText}
 
-${parser.getFormatInstructions()}
-`.replace('{word}', word);
+${formatInstructions}
+`;
 
   // AI呼び出し
   const result = await model.generateContent([prompt]);
@@ -42,10 +48,20 @@ ${parser.getFormatInstructions()}
   const text = await response.text();
   console.log('[Geminiの出力]:\n', text);
 
+  // マークダウンの ```json ``` を除去
+  const cleanedText = text
+    .replace(/^```json\s*/, '')
+    .replace(/^```\s*/, '')
+    .replace(/\s*```$/, '');
+
   // 構造化パース
-  const parsed = await parser.parse(text);
-  return parsed;
+  const parsed = schema.safeParse(JSON.parse(cleanedText));
+  if (!parsed.success) {
+    console.error("構造化パースに失敗:", parsed.error);
+    throw new Error("構造化パースに失敗しました");
+  }
+
+  return parsed.data;
 }
 
 module.exports = { generateQuestion };
-

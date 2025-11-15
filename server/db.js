@@ -45,7 +45,7 @@ db.exec(`
 // 初期プロンプト挿入
 const count = db.prepare('SELECT COUNT(*) AS count FROM prompts').get().count;
 if (count === 0) {
-  const defaultPrompt = `「{word}」に関連する応用情報技術者試験レベルの問題を1問作ってください。`;
+  const defaultPrompt = `語句に関連する応用情報技術者試験レベルの問題を1問作ってください。`;
 
   db.prepare('INSERT INTO prompts (title, content) VALUES (?, ?)').run(
     '応用情報技術者',
