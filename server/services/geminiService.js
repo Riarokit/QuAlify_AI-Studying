@@ -13,7 +13,7 @@ const parser = StructuredOutputParser.fromZodSchema(
 );
 
 async function generateQuestion(word) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   // プロンプト取得
   const setting = db.prepare('SELECT value FROM settings WHERE key = ?').get('current_prompt_id');

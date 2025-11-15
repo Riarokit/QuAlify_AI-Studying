@@ -1,3 +1,7 @@
+const API_BASE_URL = window.location.hostname === "localhost"
+  ? "http://localhost:3000"
+  : "https://qualify-ai-studying.onrender.com";
+
 // サーバーに語句を登録
 function addWord() {
   const wordInput = document.getElementById('wordInput');
@@ -7,7 +11,7 @@ function addWord() {
 
   if (!word) return;
 
-  fetch('http://localhost:3000/terms', {
+  fetch(`${API_BASE_URL}/terms`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ word, tag })
@@ -22,7 +26,7 @@ function addWord() {
 
 // 登録済みの語句一覧を取得し、画面に表示
 function updateTermList() {
-  fetch('http://localhost:3000/terms')
+  fetch(`${API_BASE_URL}/terms`)
     .then(res => res.json())
     .then(terms => {
       // チェックされているタグ一覧を取得し、配列に変換
@@ -127,7 +131,7 @@ function updateTermList() {
 // タグでのフィルター機能
 function createTagCheckboxes() {
   // サーバーから登録済みのタグ一覧を取得
-  fetch('http://localhost:3000/terms/tags')
+  fetch(`${API_BASE_URL}/terms/tags`)
     .then(res => res.json())
     .then(tags => {
       const container = document.getElementById('tagCheckboxes');
@@ -155,7 +159,7 @@ function createTagCheckboxes() {
 // 単語を削除する関数
 function deleteWord(id) {
   // 選ばれた語句の id を使って、サーバーにDELETEリクエストを送信
-  fetch(`http://localhost:3000/terms/${id}`, {
+  fetch(`${API_BASE_URL}/terms/${id}`, {
     method: 'DELETE'
   })
     .then(res => {
@@ -198,7 +202,7 @@ function createEditableTagElement(term) {
     input.addEventListener('blur', () => {
       const newTag = input.value.trim() || '未分類';
 
-      fetch(`http://localhost:3000/terms/${term.id}`, {
+      fetch(`${API_BASE_URL}/terms/${term.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tag: newTag })
@@ -220,7 +224,7 @@ function createEditableTagElement(term) {
 
 // タグ候補を取得して表示
 function updateTagCandidates() {
-  fetch('http://localhost:3000/terms/tags')
+  fetch(`${API_BASE_URL}/terms/tags`)
     .then(res => res.json())
     .then(tags => {
       // サーバーにリクエストして、DISTINCT tag で取得したタグ一覧を受け取る
@@ -243,7 +247,7 @@ function updateTagCandidates() {
 // 選ばれた語句から問題を生成（API呼び出し）
 function generateQuestion(word, id) {
   // generate-questionにwordを送信し、wordを元にAIが問題を生成
-  fetch('http://localhost:3000/terms/generate-question', {
+  fetch(`${API_BASE_URL}/terms/generate-question`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ word })
@@ -336,7 +340,7 @@ function displayGeneratedQuestion(questionObject, id) {
 
 // 習熟度を更新する関数
 function updateProficiency(id, delta) {
-  fetch(`http://localhost:3000/terms/${id}/proficiency`, {
+  fetch(`${API_BASE_URL}/terms/${id}/proficiency`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ delta })
@@ -360,7 +364,7 @@ function createPrompt() {
   if (!title || !content) return alert('タイトルと内容を入力してください');
 
   // サーバーにPOSTリクエストを送信してプロンプトを作成
-  fetch('http://localhost:3000/prompts', {
+  fetch(`${API_BASE_URL}/prompts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title, content })
@@ -375,7 +379,7 @@ function createPrompt() {
       selectedPromptId = id;
 
       // サーバーにも選択状態をPATCHで送信
-      return fetch(`http://localhost:3000/prompts/select/${id}`, {
+      return fetch(`${API_BASE_URL}/prompts/select/${id}`, {
         method: 'PATCH'
       });
     })
@@ -388,13 +392,13 @@ function createPrompt() {
 // プロンプト一覧を取得・表示
 function fetchPromptList() {
   // サーバーから現在選択中のプロンプトIDを取得
-  return fetch('http://localhost:3000/prompts/selected')
+  return fetch(`${API_BASE_URL}/prompts/selected`)
     .then(res => res.json())
     .then(({ selectedId }) => {
       selectedPromptId = selectedId; // フロント側でもIDを保持
 
       // 続けて、登録済みのプロンプト一覧を取得
-      return fetch('http://localhost:3000/prompts');
+      return fetch(`${API_BASE_URL}/prompts`);
     })
     .then(res => res.json())
     .then(prompts => {
@@ -431,7 +435,7 @@ function fetchPromptList() {
           selectedPromptId = prompt.id;
 
           // 選択状態をサーバー側にも保存
-          fetch(`http://localhost:3000/prompts/select/${prompt.id}`, {
+          fetch(`${API_BASE_URL}/prompts/select/${prompt.id}`, {
             method: 'PATCH'
           })
             .then(() => fetchPromptList()) // UIを再描画
@@ -445,7 +449,7 @@ function fetchPromptList() {
           deleteBtn.style.alignSelf = 'flex-end';
           deleteBtn.onclick = () => {
             if (confirm('このプロンプトを削除してもよいですか？')) {
-              fetch(`http://localhost:3000/prompts/${prompt.id}`, {
+              fetch(`${API_BASE_URL}/prompts/${prompt.id}`, {
                 method: 'DELETE'
               })
                 .then(() => fetchPromptList())
@@ -470,7 +474,7 @@ function sendChatMessage() {
     return;
   }
 
-  fetch(`http://localhost:3000/prompts/${selectedPromptId}/chat`, {
+  fetch(`${API_BASE_URL}/prompts/${selectedPromptId}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message })
@@ -493,7 +497,7 @@ function fetchChatHistory(promptId) {
   console.log('Chat履歴取得：promptId =', promptId);
 
   // タイトルを取得するんご
-  fetch(`http://localhost:3000/prompts/${promptId}/title`)
+  fetch(`${API_BASE_URL}/prompts/${promptId}/title`)
     .then(res => res.json())
     .then(title => {
       const chatPrompt = document.getElementById('chatPrompt')
@@ -505,7 +509,7 @@ function fetchChatHistory(promptId) {
     })
   
   // 修正履歴を取得するんご！
-  fetch(`http://localhost:3000/prompts/${promptId}/chat`)
+  fetch(`${API_BASE_URL}/prompts/${promptId}/chat`)
     .then(res => {
       return res.json();
     })
@@ -543,7 +547,7 @@ function fetchChatHistory(promptId) {
 function deleteChatMessage(promptId, chatId) {
   if (!confirm('このチャットを削除しますか？')) return;
 
-  fetch(`http://localhost:3000/prompts/${promptId}/chat/${chatId}`, {
+  fetch(`${API_BASE_URL}/prompts/${promptId}/chat/${chatId}`, {
     method: 'DELETE'
   })
     .then(res => {
