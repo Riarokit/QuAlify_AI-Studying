@@ -23,7 +23,7 @@
 5. サーバー起動 (serverディレクトリ上で) `node app.js`
 
 ### 2. 依存モジュールのインストール
-`npm install express cors dotenv better-sqlite3 @google/generative-ai marked langchain@0.1.14 @langchain/core langchain zod`
+`npm install express cors dotenv better-sqlite3 @google/generative-ai marked zod`
 
 ### 3. VSCode拡張機能のインストール
 ・Live Server By Ritwick Dey  
