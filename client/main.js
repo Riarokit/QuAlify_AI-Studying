@@ -2,6 +2,22 @@ const API_BASE_URL = window.location.hostname === "localhost"
   ? "http://localhost:3000"
   : "https://qualify-ai-studying.onrender.com";
 
+// APIキーを保存
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key) {
+    alert("APIキーを入力してください");
+    return;
+  }
+  localStorage.setItem("gemini_api_key", key);
+  alert("APIキーを保存しました");
+}
+
+// APIキーを取得
+function getApiKey() {
+  return localStorage.getItem("gemini_api_key");
+}
+
 // サーバーに語句を登録
 function addWord() {
   const wordInput = document.getElementById('wordInput');
@@ -246,14 +262,23 @@ function updateTagCandidates() {
 
 // 選ばれた語句から問題を生成（API呼び出し）
 function generateQuestion(word, id) {
+  if (!getApiKey()) {
+    // APIキーが未設定なら警告
+    alert("Gemini APIキーが設定されていません。サイドバーで保存してください。");
+    return;
+  }
   // generate-questionにwordを送信し、wordを元にAIが問題を生成
   fetch(`${API_BASE_URL}/terms/generate-question`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ word })
+    body: JSON.stringify({
+      word,
+      apiKey: getApiKey()
+    })
   })
     .then(res => res.json())
     .then(data => {
+      console.log("[受信したデータ]", data);
       // 問題が生成されれば画面表示（習熟度更新のためIDも渡す）
       if (data?.question && data?.explanation) {
         displayGeneratedQuestion(data, id);
@@ -278,7 +303,7 @@ function displayGeneratedQuestion(questionObject, id) {
   document.querySelectorAll('.question-bubble').forEach(el => el.remove());
 
   // 問題と解説をパース
-  const { question, explanation } = questionObject;
+  const { question, options, explanation } = questionObject;
 
   if (!question || !explanation) {
     alert('問題の形式が正しくありません');
@@ -289,8 +314,17 @@ function displayGeneratedQuestion(questionObject, id) {
   const bubble = document.createElement('div');
   bubble.className = 'question-bubble';
 
+  // Markdown → HTML
+  let questionMarkdown = `**問題：**\n${question}`;
+
+  // options がある場合は選択肢つける
+  if (Array.isArray(options) && options.length > 0) {
+    questionMarkdown += "\n\n**選択肢：**\n";
+    questionMarkdown += options.map(opt => `- ${opt}`).join("\n");
+  }
+
   // 問題部（MarkdownからHTMLへ変換）
-  const questionHTML = renderMarkdownToHTML(`**問題：**\n${question}`);
+  const questionHTML = renderMarkdownToHTML(questionMarkdown);
   const explanationHTML = renderMarkdownToHTML(`**解説：**\n${explanation}`);
 
   // 解説ボタンと解説領域
@@ -577,4 +611,3 @@ window.onload = () => {
 
   document.getElementById('sortSelect').addEventListener('change', updateTermList);
 };
-

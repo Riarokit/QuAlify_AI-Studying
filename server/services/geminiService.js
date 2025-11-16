@@ -2,14 +2,16 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('../db');
 const { z } = require('zod');
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
 const schema = z.object({
-    question: z.string().describe("問題文と選択肢"),
-    explanation: z.string().describe("問題に対する解説")
+    question: z.string(),
+    options: z.array(z.string()).optional(),
+    explanation: z.string()
 });
 
-async function generateQuestion(word) {
+async function generateQuestion(word, apiKey) {
+  if (!apiKey) throw new Error("APIキーが提供されていません");
+
+  const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
   // プロンプト取得
@@ -25,9 +27,10 @@ async function generateQuestion(word) {
     : '';
 
   // JSON形式の出力指示
-  const formatInstructions = `以下の形式のJSONで出力してください:
+  const formatInstructions = `以下の形式のJSONで出力してください。選択肢問題の場合は "options" を含めてください。:
 {
   "question": "○○に関する問題文と選択肢をここに記述",
+  "options": ["A", "B", "C", "D"],
   "explanation": "その解説をここに記述"
 }`;
 
