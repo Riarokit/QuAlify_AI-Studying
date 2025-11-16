@@ -2,6 +2,18 @@ const API_BASE_URL = window.location.hostname === "localhost"
   ? "http://localhost:3000"
   : "https://qualify-ai-studying.onrender.com";
 
+// サイドバーの表示/非表示切り替え
+function toggleSidebar() {
+  document.querySelector(".sidebar").classList.toggle("hidden");
+}
+
+// 画面幅が狭い場合、サイドバーを閉じる
+function closeSidebarIfMobile() {
+  if (window.innerWidth < 768) {
+    document.querySelector(".sidebar").classList.add("hidden");
+  }
+}
+
 // APIキーを保存
 function saveApiKey() {
   const key = document.getElementById("settingsApiKeyInput").value;
@@ -180,7 +192,7 @@ function createTagCheckboxes() {
       // 1タグずつ、<label><input type="checkbox"> タグ名</label> を生成
       tags.forEach(tag => {
         const label = document.createElement('label');
-        label.style.marginRight = '10px';
+        label.style.marginRight = '12px';
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';

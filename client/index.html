@@ -9,7 +9,10 @@
 <body>
 
   <!-- 上部ヘッダー -->
-  <header class="app-header">QuAlify</header>
+  <header class="app-header">
+    <button id="menuButton" onclick="toggleSidebar()">☰</button>
+    QuAlify
+  </header>
 
   <!-- メインアプリレイアウト -->
   <div class="app-container">
@@ -39,12 +42,12 @@
 
         <fieldset class="control-section">
           <div id="tagFilterContainer">
-            <strong>絞り込み：</strong>
+            <strong class="section-title">絞り込み：</strong>
             <div id="tagCheckboxes"></div>
           </div>
-          <div style="margin-top: 10px;">
-            <label for="sortSelect"><strong>並べ替え：</strong></label><br>
-            <select id="sortSelect" style="margin-top: 5px;">
+          <div style="margin-top: 16px;">
+            <label for="sortSelect"><strong class="section-title">並べ替え：</strong></label><br>
+            <select id="sortSelect" style="margin-top: 6px;">
               <option value="id">登録順（新しい順）</option>
               <option value="tag">タグ順</option>
               <option value="proficiency">習熟度が低い順</option>

@@ -9,6 +9,15 @@ html, body {
 }
 
 /* === ヘッダーとレイアウト構成 === */
+#menuButton {
+  font-size: 25px;
+  margin-right: 12Wpx;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: white;
+}
+
 .app-header {
   background-color: #4a8ca8;
   color: white;
@@ -30,6 +39,12 @@ html, body {
   padding: 20px;
   box-sizing: border-box;
   min-height: inherit;
+  transition: transform 0.3s ease-in-out;
+  transform: translateX(0);
+}
+
+.sidebar.hidden {
+  transform: translateX(-100%);
 }
 
 /* 中央寄せ＆最大幅制限は右側のコンテンツだけ */
@@ -97,23 +112,25 @@ h1, h2 {
   color: #2c3e50;
 }
 
-input[type="text"] {
-  padding: 8px;
-  font-size: 16px;
-  width: 250px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+/* 共通フォームサイズ調整 */
+input, select, textarea, button {
+  font-size: 17px;     /* ←文字サイズ */
+  padding: 10px 12px;  /* ←入力欄の高さ */
+  border-radius: 10px;  /* ←角丸（好みで調整） */
+}
+
+input[type="text"], textarea {
+  width: 300px;
+  max-width: 100%;
+  border: 2px solid #ccc;
 }
 
 button {
   background-color: #3498db;
   color: white;
   border: none;
-  padding: 8px 14px;
   margin-top: 5px;
   margin-left: 8px;
-  border-radius: 5px;
-  font-size: 14px;
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -121,6 +138,30 @@ button {
 button:hover {
   background-color: #2980b9;
 }
+
+select {
+  min-width: 100px;
+}
+
+/* 絞り込み・並べ替えの文字の大きさ */
+.section-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-right: 12px;
+}
+
+/* 絞り込みチェックボックスのサイズ調整 */
+#tagCheckboxes input[type="checkbox"] {
+  transform: scale(1.6);
+  margin-right: 6px;
+}
+
+/* テキストのフォントサイズ変更 */
+#tagCheckboxes label {
+  font-size: 17px;
+  margin-right: 17px;
+}
+
 
 /* === 単語の管理画面 === */
 
@@ -180,6 +221,7 @@ ul#wordList li {
 
 .term-word {
   font-weight: bold;
+  font-size: 18px;
   color: #2c3e50;
 }
 
@@ -187,7 +229,7 @@ ul#wordList li {
   background-color: #eef;
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 15px;
   color: #3366cc;
   display: inline-block;
   width: fit-content;
@@ -197,7 +239,7 @@ ul#wordList li {
 
 .term-proficiency {
   margin-top: 4px;
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .term-action button {
