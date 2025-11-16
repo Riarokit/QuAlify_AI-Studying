@@ -8,6 +8,7 @@ function saveApiKey() {
   if (!key) return alert("APIキーを入力してください");
   localStorage.setItem("gemini_api_key", key);
   alert("APIキーを保存しました");
+  updateApiKeyStatus();
 }
 
 // APIキーを削除
