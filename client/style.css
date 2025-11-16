@@ -39,12 +39,22 @@ html, body {
   padding: 20px;
   box-sizing: border-box;
   min-height: inherit;
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.3s ease-in-out, width 0.3s ease-in-out, padding 0.3s ease-in-out;
   transform: translateX(0);
 }
 
 .sidebar.hidden {
   transform: translateX(-100%);
+  width: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.sidebar.hidden + .page-container {
+  max-width: 1000px;
+  width: auto;
+  margin: 0 auto;
+  padding-left: 20px;
 }
 
 /* 中央寄せ＆最大幅制限は右側のコンテンツだけ */
@@ -120,7 +130,7 @@ input, select, textarea, button {
 }
 
 input[type="text"], textarea {
-  width: 300px;
+  width: 280px;
   max-width: 100%;
   border: 2px solid #ccc;
 }
