@@ -77,15 +77,15 @@ router.patch('/:id', (req, res) => {
 // AIによる問題生成
 router.post('/generate-question', async (req, res) => {
   // クライアント側からwordの情報を取得
-  const { apiKey, word } = req.body;
-  if (!word) return res.status(400).json({ error: 'word is required' });
+  const { word, apiKey, model } = req.body;
+  if (!word) return res.status(400).json({ error: '単語がありません' });
   if (!apiKey) return res.status(400).json({ error: "Gemini APIキーがありません" });
 
   console.log(`\n🧠 問題生成: word="${word}" apiKeyPresent=${!!apiKey}`);
 
   // 生成できれば結果をクライアント側に送信
   try {
-    const result = await generateQuestion(word, apiKey);
+    const result = await generateQuestion(word, apiKey, model);
     res.json(result);
   } catch (error) {
     console.error('[生成エラー]', error);

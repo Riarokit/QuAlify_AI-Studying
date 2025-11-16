@@ -4,18 +4,41 @@ const API_BASE_URL = window.location.hostname === "localhost"
 
 // APIキーを保存
 function saveApiKey() {
-  const key = document.getElementById('apiKeyInput').value.trim();
-  if (!key) {
-    alert("APIキーを入力してください");
-    return;
-  }
+  const key = document.getElementById("settingsApiKeyInput").value;
+  if (!key) return alert("APIキーを入力してください");
   localStorage.setItem("gemini_api_key", key);
   alert("APIキーを保存しました");
+}
+
+// APIキーを削除
+function deleteApiKey() {
+  localStorage.removeItem("gemini_api_key");
+  updateApiKeyStatus();
+}
+
+// APIキーの登録状態を表示
+function updateApiKeyStatus() {
+  const saved = localStorage.getItem("gemini_api_key");
+  document.getElementById("apiKeyStatus").textContent =
+    saved ? "登録済み" : "未登録";
 }
 
 // APIキーを取得
 function getApiKey() {
   return localStorage.getItem("gemini_api_key");
+}
+
+// モデルを保存
+function saveModel() {
+  const model = document.getElementById("modelSelect").value;
+  localStorage.setItem("GEMINI_MODEL", model);
+  updateModelStatus();
+}
+
+// モデルの状態を表示
+function updateModelStatus() {
+  const model = localStorage.getItem("GEMINI_MODEL") || "未設定";
+  document.getElementById("modelStatus").textContent = `現在のモデル：${model}`;
 }
 
 // サーバーに語句を登録
@@ -264,16 +287,19 @@ function updateTagCandidates() {
 function generateQuestion(word, id) {
   if (!getApiKey()) {
     // APIキーが未設定なら警告
-    alert("Gemini APIキーが設定されていません。サイドバーで保存してください。");
+    alert("Gemini APIキーが設定されていません。各種設定より保存してください。");
     return;
   }
+  const apiKey = getApiKey();
+  const model = localStorage.getItem("gemini_model") || "gemini-2.5-flash-lite";
   // generate-questionにwordを送信し、wordを元にAIが問題を生成
   fetch(`${API_BASE_URL}/terms/generate-question`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       word,
-      apiKey: getApiKey()
+      apiKey,
+      model
     })
   })
     .then(res => res.json())
@@ -599,6 +625,8 @@ function deleteChatMessage(promptId, chatId) {
 
 // ページ読み込み時の更新内容
 window.onload = () => {
+  updateApiKeyStatus(); // APIキーの登録状態を表示
+  updateModelStatus(); // モデルの状態を表示
   updateTermList();    // 語句一覧を取得
   updateTagCandidates(); // タグ候補も取得
   createTagCheckboxes(); // フィルター用タグ候補

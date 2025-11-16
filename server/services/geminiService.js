@@ -8,11 +8,11 @@ const schema = z.object({
     explanation: z.string()
 });
 
-async function generateQuestion(word, apiKey) {
+async function generateQuestion(word, apiKey, model) {
   if (!apiKey) throw new Error("APIキーが提供されていません");
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+  const modelInstance = genAI.getGenerativeModel({ model: model || 'gemini-2.5-flash-lite' });
 
   // プロンプト取得
   const setting = db.prepare('SELECT value FROM settings WHERE key = ?').get('current_prompt_id');
@@ -46,7 +46,7 @@ ${formatInstructions}
 `;
 
   // AI呼び出し
-  const result = await model.generateContent([prompt]);
+  const result = await modelInstance.generateContent([prompt]);
   const response = await result.response;
   const text = await response.text();
   console.log('[Geminiの出力]:\n', text);
