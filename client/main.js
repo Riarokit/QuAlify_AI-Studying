@@ -298,27 +298,12 @@ function updateTagCandidates() {
 
 // 選ばれた語句から問題を生成（API呼び出し）
 function generateQuestion(word, id) {
-  if (!getApiKey()) {
-    // APIキーが未設定なら警告
-    alert("Gemini APIキーが設定されていません。各種設定より保存してください。");
-    return;
-  }
-  const apiKey = getApiKey();
-  const model = localStorage.getItem("gemini_model") || "gemini-2.5-flash-lite";
-  // generate-questionにwordを送信し、wordを元にAIが問題を生成
-  fetch(`${API_BASE_URL}/terms/generate-question`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      word,
-      apiKey,
-      model
-    })
-  })
-    .then(res => res.json())
+  // 既存の機能：APIキーが未設定なら警告
+  if (!getApiKey()) return alert("Gemini APIキーが設定されていません。各種設定より保存してください。");
+
+  // fetchQuestionForWord を使ってデータを取得し、既存の表示関数に渡す
+  fetchQuestionForWord(word)
     .then(data => {
-      console.log("[受信したデータ]", data);
-      // 問題が生成されれば画面表示（習熟度更新のためIDも渡す）
       if (data?.question && data?.explanation) {
         displayGeneratedQuestion(data, id);
       } else {
@@ -329,6 +314,19 @@ function generateQuestion(word, id) {
       console.error(err);
       document.getElementById('questionText').textContent = 'エラーが発生しました。';
     });
+}
+
+// 単語に対して問題を取得するユーティリティ（Promiseを返す）
+function fetchQuestionForWord(word) {
+  if (!getApiKey()) return Promise.reject(new Error('APIキーが未設定'));
+  const apiKey = getApiKey();
+  const model = localStorage.getItem("gemini_model") || "gemini-2.5-flash-lite";
+
+  return fetch(`${API_BASE_URL}/terms/generate-question`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ word, apiKey, model })
+  }).then(res => res.json());
 }
 
 // MarkdownをHTMLに変換する関数
@@ -637,12 +635,236 @@ function deleteChatMessage(promptId, chatId) {
 }
 
 // ページ読み込み時の更新内容
+// === 道場 (dojo) 機能 ===
+const dojoState = {
+  active: false,
+  candidates: [],
+  remaining: [],      // 出題済みを除外したプール
+  currentTerm: null,
+  presented: 0,
+  correct: 0
+};
+
+function populateDojoTagCheckboxes() {
+  fetch(`${API_BASE_URL}/terms/tags`)
+    .then(res => res.json())
+    .then(tags => {
+      const container = document.getElementById('dojoTagCheckboxes');
+      if (!container) return;
+      container.innerHTML = '';
+      tags.forEach(tag => {
+        const label = document.createElement('label');
+        label.style.marginRight = '12px';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = tag;
+        checkbox.name = 'dojoTagFilter';
+
+        label.appendChild(checkbox);
+        label.append(` ${tag}`);
+        container.appendChild(label);
+      });
+    })
+    .catch(err => console.error('dojoタグ取得エラー:', err));
+}
+
+function initDojoTab() {
+  const startBtn = document.getElementById('dojoStartBtn');
+  const exitBtn = document.getElementById('dojoExitBtn');
+  const correctBtn = document.getElementById('dojoCorrectBtn');
+  const wrongBtn = document.getElementById('dojoWrongBtn');
+  const showExpBtn = document.getElementById('dojoShowExplanationBtn');
+
+  if (startBtn) startBtn.addEventListener('click', startDojo);
+  if (exitBtn) exitBtn.addEventListener('click', endDojo);
+  if (correctBtn) correctBtn.addEventListener('click', () => markDojoAnswer(true));
+  if (wrongBtn) wrongBtn.addEventListener('click', () => markDojoAnswer(false));
+  if (showExpBtn) showExpBtn.addEventListener('click', showDojoExplanation);
+}
+
+function startDojo() {
+  // 選択中のタグを取得
+  const selectedTags = Array.from(document.querySelectorAll('input[name="dojoTagFilter"]:checked')).map(cb => cb.value);
+  if (selectedTags.length === 0) return alert('少なくとも1つのタグを選択してください');
+
+  // 対象語句を取得してプールを作成
+  fetch(`${API_BASE_URL}/terms`)
+    .then(res => res.json())
+    .then(terms => {
+      const pool = terms.filter(t => selectedTags.includes(t.tag));
+      if (!pool || pool.length === 0) return alert('該当する単語が見つかりません');
+
+      dojoState.active = true;
+      dojoState.candidates = pool;
+      dojoState.remaining = [...pool];  // 出題済みを除外するプール
+      dojoState.presented = 0;
+      dojoState.correct = 0;
+
+      document.getElementById('dojoExitBtn').style.display = 'inline-block';
+      document.getElementById('dojoShowExplanationBtn').style.display = 'inline-block';
+      document.getElementById('dojoQuestionArea').innerHTML = '';
+      document.getElementById('dojoExplanationArea').innerHTML = '';
+      document.getElementById('dojoFeedbackButtons').style.display = 'none';
+      document.getElementById('dojoSummary').style.display = 'none';
+
+      presentDojoQuestion();
+    })
+    .catch(err => {
+      console.error('startDojoエラー:', err);
+      alert('問題を開始できませんでした');
+    });
+}
+
+function presentDojoQuestion() {
+  if (!dojoState.active) return;
+  
+  // 出題済みプールが空になったら終了
+  if (!dojoState.remaining || dojoState.remaining.length === 0) {
+    document.getElementById('dojoLoadingSpinner').style.display = 'none';
+    endDojo();
+    return;
+  }
+
+  // ランダムで1つ取り出す
+  const idx = Math.floor(Math.random() * dojoState.remaining.length);
+  const term = dojoState.remaining[idx];
+  
+  // プールから削除（次は出題しない）
+  dojoState.remaining.splice(idx, 1);
+  dojoState.currentTerm = term;
+
+  // 問題を取得して表示
+  fetchQuestionForWord(term.word)
+    .then(data => {
+      dojoState.presented += 1;
+
+      // ローディング非表示
+      document.getElementById('dojoLoadingSpinner').style.display = 'none';
+
+      // 問題表示
+      const qArea = document.getElementById('dojoQuestionArea');
+      qArea.innerHTML = renderMarkdownToHTML(`${data.question}`);
+
+      // 解説領域をリセット
+      const expArea = document.getElementById('dojoExplanationArea');
+      expArea.innerHTML = '';
+      document.getElementById('dojoFeedbackButtons').style.display = 'none';
+
+      // 解説データを保存（ボタン押時に使用）
+      dojoState.currentExplanation = data.explanation;
+    })
+    .catch(err => {
+      console.error('presentDojoQuestionエラー:', err);
+      document.getElementById('dojoLoadingSpinner').style.display = 'none';
+      alert('問題の取得に失敗しました');
+    });
+}
+
+function showDojoExplanation() {
+  if (!dojoState.currentExplanation) return;
+
+  const expArea = document.getElementById('dojoExplanationArea');
+  expArea.innerHTML = renderMarkdownToHTML(dojoState.currentExplanation);
+  
+  // ○×ボタン表示
+  document.getElementById('dojoFeedbackButtons').style.display = 'block';
+}
+
+function markDojoAnswer(isCorrect) {
+  if (!dojoState.currentTerm) return;
+  
+  if (isCorrect) {
+    dojoState.correct += 1;
+    // 習熟度を+10
+    updateProficiency(dojoState.currentTerm.id, 10);
+  } else {
+    // 習熟度を-10
+    updateProficiency(dojoState.currentTerm.id, -10);
+  }
+
+  // ローディング表示
+  document.getElementById('dojoLoadingSpinner').style.display = 'block';
+  document.getElementById('dojoQuestionArea').innerHTML = '';
+  document.getElementById('dojoExplanationArea').innerHTML = '';
+  document.getElementById('dojoFeedbackButtons').style.display = 'none';
+
+  // 次の問題へ
+  setTimeout(() => presentDojoQuestion(), 200);
+}
+
+function endDojo() {
+  dojoState.active = false;
+  
+  // 画面要素のリセット
+  document.getElementById('dojoLoadingSpinner').style.display = 'none';
+  document.getElementById('dojoExitBtn').style.display = 'none';
+  document.getElementById('dojoShowExplanationBtn').style.display = 'none';
+  document.getElementById('dojoFeedbackButtons').style.display = 'none';
+  document.getElementById('dojoQuestionArea').innerHTML = '';
+  document.getElementById('dojoExplanationArea').innerHTML = '';
+
+  const stats = {
+    presented: dojoState.presented,
+    correct: dojoState.correct,
+    wrong: dojoState.presented - dojoState.correct
+  };
+
+  // 統計表示
+  const statDiv = document.getElementById('dojoStats');
+  statDiv.innerHTML = `出題数: ${stats.presented} / 正解: ${stats.correct} / 正解率: ${stats.presented>0?Math.round((stats.correct/stats.presented)*100):0}%`;
+  document.getElementById('dojoSummary').style.display = 'block';
+
+  // 円グラフ描画
+  const canvas = document.getElementById('dojoChart');
+  drawPieChart(canvas, stats.correct, stats.wrong);
+}
+
+function drawPieChart(canvas, correct, wrong) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const total = correct + wrong || 1;
+  const correctAngle = (correct / total) * Math.PI * 2;
+
+  // クリア
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const r = Math.min(cx, cy) - 4;
+
+  // 正解（緑）
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.fillStyle = '#4caf50';
+  ctx.arc(cx, cy, r, 0, correctAngle);
+  ctx.closePath();
+  ctx.fill();
+
+  // 不正解（赤）
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.fillStyle = '#f44336';
+  ctx.arc(cx, cy, r, correctAngle, Math.PI * 2);
+  ctx.closePath();
+  ctx.fill();
+
+  // 中央にテキスト
+  ctx.fillStyle = '#000';
+  ctx.font = '16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`正解 ${correct}`, cx, cy - 6);
+  ctx.fillText(`誤答 ${wrong}`, cx, cy + 16);
+}
+
 window.onload = () => {
   updateApiKeyStatus(); // APIキーの登録状態を表示
   updateModelStatus(); // モデルの状態を表示
   updateTermList();    // 語句一覧を取得
   updateTagCandidates(); // タグ候補も取得
   createTagCheckboxes(); // フィルター用タグ候補
+  populateDojoTagCheckboxes(); // 道場用タグチェックボックス
+  initDojoTab();
   fetchPromptList().then(() => {  // 起動時にプロンプト一覧を取得
     if (selectedPromptId) {
       fetchChatHistory(selectedPromptId); // チャット記録を画面に表示

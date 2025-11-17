@@ -21,6 +21,7 @@
     <aside class="sidebar">
       <ul>
         <li class="tab active" data-tab="wordTab">単語の管理</li>
+        <li class="tab" data-tab="dojoTab">道場</li>
         <li class="tab" data-tab="promptTab">プロンプト編集</li>
         <li class="tab" data-tab="settingsTab">各種設定</li>
       </ul>
@@ -96,7 +97,55 @@
         </div>
       </div>
 
-      <!-- タブ3: 設定 -->
+      <!-- タブ3: 道場 -->
+      <div id="dojoTab" class="tab-content" style="display:none;">
+        <h2>道場</h2>
+
+        <div class="control-section">
+          <div id="dojoTagFilter">
+            <strong class="section-title">タグ選択：</strong>
+            <div id="dojoTagCheckboxes"></div>
+          </div>
+          <div style="margin-top:12px;">
+            <button id="dojoStartBtn">出題開始</button>
+            <button id="dojoExitBtn" style="margin-left:8px; display:none;">退場</button>
+          </div>
+        </div>
+
+        <div id="dojoArea">
+          <div style="display: flex; gap: 20px; margin-top: 20px;">
+            <!-- 左側：問題表示 -->
+            <div style="flex: 1;">
+              <h3>問題</h3>
+              <div id="dojoQuestionArea"></div>
+              <div id="dojoLoadingSpinner" style="display: none; text-align: center; padding: 20px;">
+                <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+                <p style="margin-top: 10px; color: #666;">読み込み中...</p>
+              </div>
+              <div style="margin-top: 12px;">
+                <button id="dojoShowExplanationBtn">解説を見る</button>
+              </div>
+            </div>
+            <!-- 右側：解説表示 -->
+            <div style="flex: 1;">
+              <h3>解説</h3>
+              <div id="dojoExplanationArea"></div>
+              <div id="dojoFeedbackButtons" style="margin-top: 12px; display: none;">
+                <button id="dojoCorrectBtn" style="background-color: #4caf50;">○ 正解</button>
+                <button id="dojoWrongBtn" style="background-color: #f44336; margin-left: 8px;">✕ 不正解</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="dojoSummary" style="margin-top:20px; display:none;">
+            <h3>結果</h3>
+            <div id="dojoStats"></div>
+            <canvas id="dojoChart" width="240" height="240"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- タブ4: 設定 -->
       <div id="settingsTab" class="tab-content" style="display:none;">
         <h2>各種設定</h2>
 
@@ -117,6 +166,7 @@
         <button onclick="saveModel()">変更を保存</button>
         <p id="modelStatus">🔄 読み込み中…</p>
       </div>
+
     </main>
   </div>
 

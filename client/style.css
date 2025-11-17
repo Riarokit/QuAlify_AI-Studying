@@ -8,6 +8,11 @@ html, body {
   color: #333;
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* === ヘッダーとレイアウト構成 === */
 #menuButton {
   font-size: 25px;
@@ -279,6 +284,76 @@ ul#wordList li {
   position: relative;
   box-shadow: 0 1px 4px rgba(0,0,0,0.1);
   animation: fadeIn 0.3s ease-in-out;
+}
+
+/* === 道場用スタイル === */
+#dojoQuestionArea {
+  background: #f0f8ff;
+  border: 2px solid #3498db;
+  padding: 16px;
+  border-radius: 8px;
+  min-height: 120px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+#dojoExplanationArea {
+  background: #fffef0;
+  border: 2px solid #f9a825;
+  padding: 16px;
+  border-radius: 8px;
+  min-height: 120px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+#dojoFeedbackButtons {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+#dojoFeedbackButtons button {
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: none;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  flex: 1;
+}
+
+#dojoCorrectBtn {
+  background-color: #4caf50;
+}
+
+#dojoCorrectBtn:hover {
+  background-color: #45a049;
+}
+
+#dojoWrongBtn {
+  background-color: #f44336;
+}
+
+#dojoWrongBtn:hover {
+  background-color: #da190b;
+}
+
+#dojoShowExplanationBtn {
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+#dojoSummary {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+#dojoChart {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
 .question-bubble::before {
