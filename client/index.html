@@ -4,8 +4,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>QuAlify</title>
+  <title>QuAlify - 資格試験向けAI自作問題道場</title>
+  <!-- Google Fonts: Inter (English) & Noto Sans JP (Japanese) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+    rel="stylesheet">
+
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 
@@ -23,10 +31,14 @@
     <!-- サイドバー -->
     <aside class="sidebar">
       <ul>
-        <li class="tab active" data-tab="wordTab">単語の管理</li>
-        <li class="tab" data-tab="dojoTab">道場</li>
-        <li class="tab" data-tab="promptTab">プロンプト編集</li>
-        <li class="tab" data-tab="settingsTab">各種設定</li>
+        <li class="tab active" data-tab="wordTab"><i class="fas fa-book" style="width: 20px; text-align: center;"></i>
+          単語の管理</li>
+        <li class="tab" data-tab="dojoTab"><i class="fas fa-khanda" style="width: 20px; text-align: center;"></i> 道場
+        </li>
+        <li class="tab" data-tab="promptTab"><i class="fas fa-pen-to-square"
+            style="width: 20px; text-align: center;"></i> プロンプト編集</li>
+        <li class="tab" data-tab="settingsTab"><i class="fas fa-gear" style="width: 20px; text-align: center;"></i> 各種設定
+        </li>
       </ul>
     </aside>
 
@@ -49,9 +61,10 @@
             <strong class="section-title">絞り込み：</strong>
             <div id="tagCheckboxes"></div>
           </div>
-          <div style="margin-top: 16px;">
-            <label for="sortSelect"><strong class="section-title">並べ替え：</strong></label><br>
-            <select id="sortSelect" style="margin-top: 6px;">
+          <div style="margin-top: 16px; display: flex; align-items: center; flex-wrap: wrap;">
+            <label for="sortSelect"><strong class="section-title"
+                style="margin-bottom: 0; margin-right: 8px;">並べ替え：</strong></label>
+            <select id="sortSelect">
               <option value="id">登録順（新しい順）</option>
               <option value="tag">タグ順</option>
               <option value="proficiency">習熟度が低い順</option>
