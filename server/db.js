@@ -40,6 +40,17 @@ db.exec(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (prompt_id) REFERENCES prompts(id)
   );
+
+  CREATE TABLE IF NOT EXISTS study_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    term_id INTEGER NOT NULL,
+    word TEXT NOT NULL,
+    tag TEXT DEFAULT '',
+    result TEXT NOT NULL,
+    proficiency_before INTEGER,
+    proficiency_after INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // 初期プロンプト挿入

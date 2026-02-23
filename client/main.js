@@ -305,10 +305,17 @@ function generateQuestion(word, id) {
   // 既存の機能：APIキーが未設定なら警告
   if (!getApiKey()) return alert("Gemini APIキーが設定されていません。各種設定より保存してください。");
 
+  // 学習履歴記録用に語句のタグを取得
+  const termRow = document.querySelector(`.term-row[data-id="${id}"]`);
+  const tagEl = termRow ? termRow.querySelector('.term-tag') : null;
+  const tag = tagEl ? tagEl.textContent : '';
+
   // fetchQuestionForWord を使ってデータを取得し、既存の表示関数に渡す
   fetchQuestionForWord(word)
     .then(data => {
       if (data?.question && data?.explanation) {
+        data._word = word;
+        data._tag = tag;
         displayGeneratedQuestion(data, id);
       } else {
         document.getElementById('questionText').textContent = '問題の生成に失敗しました。';
@@ -319,6 +326,7 @@ function generateQuestion(word, id) {
       document.getElementById('questionText').textContent = 'エラーが発生しました。';
     });
 }
+
 
 // 単語に対して問題を取得するユーティリティ（Promiseを返す）
 function fetchQuestionForWord(word) {
@@ -388,16 +396,19 @@ function displayGeneratedQuestion(questionObject, id) {
     feedbackArea.style.marginTop = '10px';
 
     const levels = [
-      { label: '〇', change: +20 },
-      { label: '△', change: +10 },
-      { label: '✕', change: -10 },
+      { label: '〇', change: +20, result: 'correct' },
+      { label: '△', change: +10, result: 'correct' },
+      { label: '✕', change: -10, result: 'wrong' },
     ];
 
-    levels.forEach(({ label, change }) => {
+    levels.forEach(({ label, change, result }) => {
       const btn = document.createElement('button');
       btn.textContent = label;
       btn.style.marginRight = '5px';
-      btn.onclick = () => updateProficiency(id, change);
+      btn.onclick = () => {
+        // word, tag は term オブジェクトから取得（引数として受け取る）
+        updateProficiency(id, change, questionObject._word, questionObject._tag, result);
+      };
       feedbackArea.appendChild(btn);
     });
 
@@ -419,11 +430,11 @@ function displayGeneratedQuestion(questionObject, id) {
 }
 
 // 習熟度を更新する関数
-function updateProficiency(id, delta) {
+function updateProficiency(id, delta, word, tag, result) {
   fetch(`${API_BASE_URL}/terms/${id}/proficiency`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ delta })
+    body: JSON.stringify({ delta, word, tag, result })
   })
     // 成功したら updateTermList() を呼んで画面を更新
     .then(res => res.json())
@@ -831,10 +842,10 @@ function markDojoAnswer(isCorrect) {
   if (isCorrect) {
     dojoState.correct += 1;
     // 習熟度を+10
-    updateProficiency(dojoState.currentTerm.id, 10);
+    updateProficiency(dojoState.currentTerm.id, 10, dojoState.currentTerm.word, dojoState.currentTerm.tag, 'correct');
   } else {
     // 習熟度を-10
-    updateProficiency(dojoState.currentTerm.id, -10);
+    updateProficiency(dojoState.currentTerm.id, -10, dojoState.currentTerm.word, dojoState.currentTerm.tag, 'wrong');
   }
 
   // ローディング表示
@@ -875,6 +886,154 @@ function endDojo() {
   if (ring) ring.style.setProperty('--rate', rate);
 
   document.getElementById('dojoSummary').style.display = 'block';
+}
+
+// ============================================================
+// 記録タブ (Stats)
+// ============================================================
+
+// Chart.js インスタンスを保持（再描画時に破棄するため）
+const statsCharts = { daily: null, tag: null, dist: null };
+
+// 記録タブを初期化・描画
+async function initStatsTab() {
+  try {
+    const [overview, daily, tags, dist] = await Promise.all([
+      fetch(`${API_BASE_URL}/stats/overview`).then(r => r.json()),
+      fetch(`${API_BASE_URL}/stats/daily`).then(r => r.json()),
+      fetch(`${API_BASE_URL}/stats/tags`).then(r => r.json()),
+      fetch(`${API_BASE_URL}/stats/proficiency-dist`).then(r => r.json()),
+    ]);
+
+    renderStatsOverview(overview);
+    renderDailyChart(daily);
+    renderTagChart(tags);
+    renderDistChart(dist);
+  } catch (err) {
+    console.error('記録タブの読み込みエラー:', err);
+  }
+}
+
+// 概要カードを更新
+function renderStatsOverview(data) {
+  document.getElementById('statTotalTerms').textContent = data.totalTerms ?? '-';
+  document.getElementById('statTotalStudied').textContent = data.totalStudied ?? '-';
+  document.getElementById('statRecentAccuracy').textContent =
+    data.recentAccuracy != null ? `${data.recentAccuracy}%` : 'データなし';
+}
+
+// 日別出題数（棒グラフ）
+function renderDailyChart(rows) {
+  const labels = [];
+  const totalData = [];
+  const correctData = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const found = rows.find(r => r.day === key);
+    labels.push(key.slice(5)); // MM-DD 形式
+    totalData.push(found ? found.total : 0);
+    correctData.push(found ? found.correct : 0);
+  }
+
+  if (statsCharts.daily) statsCharts.daily.destroy();
+  const ctx = document.getElementById('dailyChart').getContext('2d');
+  statsCharts.daily = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: '出題数',
+          data: totalData,
+          backgroundColor: 'rgba(99, 102, 241, 0.3)',
+          borderColor: 'rgba(99, 102, 241, 1)',
+          borderWidth: 2,
+          borderRadius: 4,
+        },
+        {
+          label: '正解数',
+          data: correctData,
+          backgroundColor: 'rgba(34, 197, 94, 0.5)',
+          borderColor: 'rgba(34, 197, 94, 1)',
+          borderWidth: 2,
+          borderRadius: 4,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+      },
+    },
+  });
+}
+
+// タグ別平均習熟度（横棒グラフ）
+function renderTagChart(rows) {
+  const labels = rows.map(r => r.tag);
+  const data = rows.map(r => r.avg_proficiency);
+  const colors = data.map(v =>
+    v >= 70 ? 'rgba(34, 197, 94, 0.7)' :
+      v >= 40 ? 'rgba(245, 158, 11, 0.7)' :
+        'rgba(239, 68, 68, 0.7)'
+  );
+
+  if (statsCharts.tag) statsCharts.tag.destroy();
+  const ctx = document.getElementById('tagChart').getContext('2d');
+  statsCharts.tag = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: '平均習熟度',
+        data,
+        backgroundColor: colors,
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, max: 100, ticks: { stepSize: 20 } },
+      },
+    },
+  });
+}
+
+// 習熟度分布（ドーナツグラフ）
+function renderDistChart(dist) {
+  if (statsCharts.dist) statsCharts.dist.destroy();
+  const ctx = document.getElementById('distChart').getContext('2d');
+  statsCharts.dist = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['定着中 (70〜100)', '学習中 (40〜69)', '要強化 (0〜39)'],
+      datasets: [{
+        data: [dist.high, dist.mid, dist.low],
+        backgroundColor: [
+          'rgba(34, 197, 94, 0.7)',
+          'rgba(245, 158, 11, 0.7)',
+          'rgba(239, 68, 68, 0.7)',
+        ],
+        borderWidth: 2,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+      },
+    },
+  });
 }
 
 window.onload = () => {

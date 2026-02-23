@@ -103,16 +103,16 @@ router.post('/generate-question', async (req, res) => {
 
 // 習熟度更新
 router.patch('/:id/proficiency', (req, res) => {
-  // クライアント側からid,deltaの情報を取得
+  // クライアント側からid,delta,result,word,tagの情報を取得
   const { id } = req.params;
-  const { delta } = req.body;
+  const { delta, result, word, tag } = req.body;
 
   if (typeof delta !== 'number') {
     return res.status(400).json({ error: 'delta must be a number' });
   }
 
   // 現在の習熟度を取得
-  const current = db.prepare('SELECT proficiency FROM terms WHERE id = ?').get(id);
+  const current = db.prepare('SELECT proficiency, word, tag FROM terms WHERE id = ?').get(id);
   if (!current) return res.status(404).json({ error: '語句が存在しません' });
 
   // 新しい習熟度を算出（0〜100にクリップ）
@@ -120,6 +120,16 @@ router.patch('/:id/proficiency', (req, res) => {
 
   // 更新を実行
   db.prepare('UPDATE terms SET proficiency = ? WHERE id = ?').run(newProficiency, id);
+
+  // 学習ログを記録
+  const logResult = result || (delta > 0 ? 'correct' : 'wrong');
+  const logWord = word || current.word;
+  const logTag = tag || current.tag || '';
+  db.prepare(`
+    INSERT INTO study_logs (term_id, word, tag, result, proficiency_before, proficiency_after)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(parseInt(id), logWord, logTag, logResult, current.proficiency, newProficiency);
+
   res.json({ success: true });
 });
 

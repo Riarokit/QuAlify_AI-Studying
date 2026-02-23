@@ -1102,3 +1102,111 @@ textarea.prompt-input {
     margin-right: 12px;
   }
 }
+
+/* === 記録タブ（Stats）=== */
+
+/* 概要カードの横並びグリッド */
+.stats-overview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+/* 各概要カード */
+.stats-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* アクセントカード（正解率） */
+.stats-card-accent {
+  background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%);
+  border-color: #93c5fd;
+}
+
+.stats-card-value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.stats-card-accent .stats-card-value {
+  color: #1d4ed8;
+}
+
+.stats-card-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* グラフカードのラッパー */
+.stats-chart-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-chart-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), #6366f1);
+}
+
+.stats-chart-title {
+  margin: 0 0 20px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* グラフ canvas のラッパー（高さを固定してresponsive動作） */
+.stats-chart-wrap {
+  position: relative;
+  height: 260px;
+}
+
+/* ドーナツグラフは少し小さめに */
+.stats-donut-wrap {
+  height: 300px;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+/* スマホでは概要カードを縦2列に */
+@media (max-width: 600px) {
+  .stats-overview {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stats-card-accent {
+    grid-column: 1 / -1;
+  }
+}

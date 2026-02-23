@@ -37,6 +37,8 @@
         </li>
         <li class="tab" data-tab="promptTab"><i class="fas fa-pen-to-square"
             style="width: 20px; text-align: center;"></i> プロンプト編集</li>
+        <li class="tab" data-tab="statsTab"><i class="fas fa-chart-line" style="width: 20px; text-align: center;"></i>
+          記録</li>
         <li class="tab" data-tab="settingsTab"><i class="fas fa-gear" style="width: 20px; text-align: center;"></i> 各種設定
         </li>
       </ul>
@@ -88,6 +90,51 @@
 
         <h2>登録済みのプロンプト</h2>
         <div id="promptList"></div>
+      </div>
+
+      <!-- タブ5: 記録 -->
+      <div id="statsTab" class="tab-content" style="display: none;">
+        <h2>学習記録</h2>
+
+        <!-- 概要カード -->
+        <div class="stats-overview">
+          <div class="stats-card">
+            <span class="stats-card-value" id="statTotalTerms">-</span>
+            <span class="stats-card-label">登録語句数</span>
+          </div>
+          <div class="stats-card">
+            <span class="stats-card-value" id="statTotalStudied">-</span>
+            <span class="stats-card-label">総出題数</span>
+          </div>
+          <div class="stats-card stats-card-accent">
+            <span class="stats-card-value" id="statRecentAccuracy">-</span>
+            <span class="stats-card-label">直近7日の正解率</span>
+          </div>
+        </div>
+
+        <!-- 日別学習推移 -->
+        <div class="stats-chart-card">
+          <h3 class="stats-chart-title">📅 日別出題数（過去14日）</h3>
+          <div class="stats-chart-wrap">
+            <canvas id="dailyChart"></canvas>
+          </div>
+        </div>
+
+        <!-- タグ別平均習熟度 -->
+        <div class="stats-chart-card">
+          <h3 class="stats-chart-title">🏷️ タグ別平均習熟度</h3>
+          <div class="stats-chart-wrap">
+            <canvas id="tagChart"></canvas>
+          </div>
+        </div>
+
+        <!-- 習熟度分布 -->
+        <div class="stats-chart-card">
+          <h3 class="stats-chart-title">📊 習熟度分布</h3>
+          <div class="stats-chart-wrap stats-donut-wrap">
+            <canvas id="distChart"></canvas>
+          </div>
+        </div>
       </div>
 
       <!-- タブ3: 道場 -->
@@ -207,6 +254,11 @@
         selectedTab.classList.add('active');
         selectedContent.style.display = 'block';
         localStorage.setItem('currentTab', tabName);
+      }
+
+      // 記録タブを開いたときにグラフを描画
+      if (tabName === 'statsTab' && typeof initStatsTab === 'function') {
+        initStatsTab();
       }
     }
 
