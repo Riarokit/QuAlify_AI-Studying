@@ -21,6 +21,23 @@ router.post('/', (req, res) => {
   res.status(201).json({ id: info.lastInsertRowid });
 });
 
+// プロンプトの更新
+router.patch('/:promptId', (req, res) => {
+  const { promptId } = req.params;
+  const { title, content } = req.body;
+
+  if (!title || !content) {
+    return res.status(400).json({ error: 'タイトルと内容は必須です' });
+  }
+
+  const result = db.prepare('UPDATE prompts SET title = ?, content = ? WHERE id = ?').run(title, content, promptId);
+  if (result.changes === 0) {
+    return res.status(404).json({ error: 'プロンプトが存在しません' });
+  }
+
+  res.json({ success: true });
+});
+
 // 現在選択されているプロンプトのIDを取得
 // settingsテーブルのcurrent_prompt_idキーから取得する
 router.get('/selected', (req, res) => {

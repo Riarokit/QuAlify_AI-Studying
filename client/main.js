@@ -6,26 +6,16 @@ const API_BASE_URL = window.location.hostname === "localhost"
 function toggleSidebar() {
   const sidebar = document.querySelector(".sidebar");
   if (!sidebar) return;
-
-  if (window.innerWidth < 768) {
-    // モバイルでは完全に出し入れする
-    sidebar.classList.toggle("hidden");
-  } else {
-    // PC ではタブ部分だけを折りたたみ（ハンバーガーは残す）
-    sidebar.classList.toggle("collapsed");
-  }
+  sidebar.classList.toggle("hidden");
 }
 
-// 画面幅が狭い場合、サイドバーを閉じる
+// 初期表示時の制御（必要に応じて）
 function closeSidebarIfMobile() {
   const sidebar = document.querySelector(".sidebar");
   if (!sidebar) return;
 
   if (window.innerWidth < 768) {
     sidebar.classList.add("hidden");
-    sidebar.classList.remove("collapsed");
-  } else {
-    sidebar.classList.remove("hidden");
   }
 }
 
@@ -98,7 +88,7 @@ function updateTermList() {
     .then(terms => {
       // チェックされているタグ一覧を取得し、配列に変換
       const selectedTags = Array.from(document.querySelectorAll('input[name="tagFilter"]:checked'))
-                                .map(cb => cb.value);
+        .map(cb => cb.value);
 
       // チェックされたタグがあれば、そのタグに一致する語句だけ残す
       if (selectedTags.length > 0) {
@@ -112,7 +102,7 @@ function updateTermList() {
           case 'id': // 新しい順
             return b.id - a.id;
           case 'tag': // タグ順
-            return (a.tag || '').localeCompare(b.tag || ''); 
+            return (a.tag || '').localeCompare(b.tag || '');
           case 'proficiency': // 習熟度昇順
             return (a.proficiency || 0) - (b.proficiency || 0);
           default:
@@ -123,7 +113,7 @@ function updateTermList() {
       // 一度リストを初期化
       const list = document.getElementById('wordList');
       list.innerHTML = '';
-      
+
       // 各語句の表示リストを作成
       terms.forEach(term => {
         // 語句1つ分のコンテナとしてdivを生成
@@ -140,46 +130,45 @@ function updateTermList() {
         // タグ
         const tagElem = createEditableTagElement(term);
 
-        // 習熟度
+        // 習熟度（スリムなインライン表示）
         const proficiencyElem = document.createElement('div');
         proficiencyElem.className = 'term-proficiency';
         const percent = term.proficiency || 0;
+        const barColor = percent >= 70 ? '#22c55e' : percent >= 40 ? '#f59e0b' : '#ef4444';
         proficiencyElem.innerHTML = `
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <div style="
-              width: 80px;
-              background-color: #eee;
-              height: 16px;
-              border-radius: 4px;
-              overflow: hidden;
-            ">
-              <div style="
-                width: ${percent}%;
-                background-color: ${percent >= 70 ? 'green' : percent >= 40 ? 'orange' : 'red'};
-                height: 100%;
-                transition: width 0.3s;
-              "></div>
+          <div class="proficiency-bar-container">
+            <div class="proficiency-bar-fill" style="width: ${percent}%; background-color: ${barColor};">
+              <span class="proficiency-text">${percent}</span>
             </div>
-            <div style="font-size: 14px;">${percent}%</div>
           </div>
         `;
 
-        // ボタンコンテナの定義
+        // ボタンコンテナの定義（アイコンベース）
         const buttonWrapper = document.createElement('div');
         buttonWrapper.className = 'term-action';
 
-        // 問題を作るボタン
-        const generateBtn = document.createElement('button');
-        generateBtn.textContent = '問題を作る';
-        generateBtn.onclick = () => generateQuestion(term.word, term.id);
-        buttonWrapper.appendChild(generateBtn);
-
-        // 削除ボタン
+        // 削除ボタン（ゴミ箱アイコン）
         const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = '削除';
-        deleteBtn.style.marginLeft = '10px';
-        deleteBtn.onclick = () => deleteWord(term.id);
+        deleteBtn.innerHTML = '<i class="fa-regular fa-trash-can"></i>';
+        deleteBtn.className = 'icon-btn delete-btn';
+        deleteBtn.title = '削除';
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          deleteWord(term.id);
+        };
+
+        // 問題を作るボタン（紙飛行機アイコン）
+        const generateBtn = document.createElement('button');
+        generateBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+        generateBtn.className = 'icon-btn generate-btn';
+        generateBtn.title = '問題を作る';
+        generateBtn.onclick = (e) => {
+          e.stopPropagation();
+          generateQuestion(term.word, term.id);
+        };
+
         buttonWrapper.appendChild(deleteBtn);
+        buttonWrapper.appendChild(generateBtn);
 
         // 行コンテナに要素を追加
         row.appendChild(wordElem);
@@ -480,6 +469,18 @@ function createPrompt() {
     });
 }
 
+// プロンプトを更新
+function updatePrompt(id, title, content) {
+  return fetch(`${API_BASE_URL}/prompts/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, content })
+  })
+    .then(res => res.json())
+    .then(() => fetchPromptList())
+    .catch(err => console.error('プロンプト更新エラー:', err));
+}
+
 // プロンプト一覧を取得・表示
 function fetchPromptList() {
   // サーバーから現在選択中のプロンプトIDを取得
@@ -502,43 +503,56 @@ function fetchPromptList() {
         box.className = 'prompt-box';
         box.dataset.id = prompt.id;
 
-        // 選択中のプロンプトには太線をつける
+        // 選択中のプロンプトには強調表示
         if (prompt.id === selectedPromptId) {
           box.classList.add('selected');
         }
 
+        // 表示モード用コンテナ
+        const viewMode = document.createElement('div');
+        viewMode.style.width = '100%';
+
         // タイトル要素の作成（太字）
         const titleElem = document.createElement('div');
         titleElem.style.fontWeight = 'bold';
+        titleElem.style.fontSize = '18px';
+        titleElem.style.marginBottom = '8px';
         titleElem.textContent = prompt.title;
 
         // 内容要素の作成（preで折り返し表示）
         const contentElem = document.createElement('pre');
         contentElem.style.whiteSpace = 'pre-wrap';
+        contentElem.style.backgroundColor = '#f4f4f4';
+        contentElem.style.padding = '10px';
+        contentElem.style.borderRadius = '4px';
         contentElem.textContent = prompt.content;
 
-        // 要素をコンテナに追加
-        box.appendChild(titleElem);
-        box.appendChild(contentElem);
+        viewMode.appendChild(titleElem);
+        viewMode.appendChild(contentElem);
 
-        // クリックされたとき、選択状態を更新する
-        box.onclick = () => {
-          selectedPromptId = prompt.id;
+        // ボタンエリア
+        const actionArea = document.createElement('div');
+        actionArea.style.display = 'flex';
+        actionArea.style.gap = '10px';
+        actionArea.style.marginTop = '10px';
+        actionArea.style.justifyContent = 'flex-end';
+        actionArea.style.width = '100%';
 
-          // 選択状態をサーバー側にも保存
-          fetch(`${API_BASE_URL}/prompts/select/${prompt.id}`, {
-            method: 'PATCH'
-          })
-            .then(() => fetchPromptList()) // UIを再描画
-            .catch(err => console.error('プロンプト選択更新エラー:', err));
+        // 編集ボタン
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '編集';
+        editBtn.onclick = (e) => {
+          e.stopPropagation();
+          enterEditMode();
         };
 
-        if (prompt.id !== 1) {  // ID=1（デフォルト）以外のみ削除可能
+        // 削除ボタン
+        if (prompt.id !== 1) {
           const deleteBtn = document.createElement('button');
           deleteBtn.textContent = '削除';
-          deleteBtn.style.marginTop = '10px';
-          deleteBtn.style.alignSelf = 'flex-end';
-          deleteBtn.onclick = () => {
+          deleteBtn.style.backgroundColor = '#e74c3c';
+          deleteBtn.onclick = (e) => {
+            e.stopPropagation();
             if (confirm('このプロンプトを削除してもよいですか？')) {
               fetch(`${API_BASE_URL}/prompts/${prompt.id}`, {
                 method: 'DELETE'
@@ -547,114 +561,87 @@ function fetchPromptList() {
                 .catch(err => console.error('プロンプト削除エラー:', err));
             }
           };
-          box.appendChild(deleteBtn);
+          actionArea.appendChild(deleteBtn);
+        }
+        actionArea.appendChild(editBtn);
+        viewMode.appendChild(actionArea);
+
+        // 編集モード用コンテナ
+        const editMode = document.createElement('div');
+        editMode.style.display = 'none';
+        editMode.style.width = '100%';
+
+        const titleInput = document.createElement('input');
+        titleInput.type = 'text';
+        titleInput.value = prompt.title;
+        titleInput.style.width = '100%';
+        titleInput.style.marginBottom = '8px';
+        titleInput.className = 'prompt-input';
+
+        const contentInput = document.createElement('textarea');
+        contentInput.value = prompt.content;
+        contentInput.style.width = '100%';
+        contentInput.rows = 6;
+        contentInput.className = 'prompt-input';
+
+        const editActions = document.createElement('div');
+        editActions.style.display = 'flex';
+        editActions.style.gap = '10px';
+        editActions.style.marginTop = '10px';
+        editActions.style.justifyContent = 'flex-end';
+
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = '保存';
+        saveBtn.onclick = (e) => {
+          e.stopPropagation();
+          updatePrompt(prompt.id, titleInput.value.trim(), contentInput.value.trim());
+        };
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'キャンセル';
+        cancelBtn.style.backgroundColor = '#95a5a6';
+        cancelBtn.onclick = (e) => {
+          e.stopPropagation();
+          exitEditMode();
+        };
+
+        editActions.appendChild(cancelBtn);
+        editActions.appendChild(saveBtn);
+        editMode.appendChild(titleInput);
+        editMode.appendChild(contentInput);
+        editMode.appendChild(editActions);
+
+        function enterEditMode() {
+          viewMode.style.display = 'none';
+          editMode.style.display = 'block';
         }
 
-        // 表示エリアに追加
+        function exitEditMode() {
+          viewMode.style.display = 'block';
+          editMode.style.display = 'none';
+        }
+
+        box.appendChild(viewMode);
+        box.appendChild(editMode);
+
+        // カードクリックで選択
+        box.onclick = () => {
+          if (editMode.style.display === 'block') return; // 編集時は選択更新しない
+          selectedPromptId = prompt.id;
+          fetch(`${API_BASE_URL}/prompts/select/${prompt.id}`, {
+            method: 'PATCH'
+          })
+            .then(() => fetchPromptList())
+            .catch(err => console.error('プロンプト選択更新エラー:', err));
+        };
+
         list.appendChild(box);
       });
     });
 }
 
-// Chatのメッセージを保存する関数
-function sendChatMessage() {
-  const input = document.getElementById('chatInput');
-  const message = input.value.trim();
-  if (!message || !selectedPromptId) {
-    console.warn('送信中止：messageまたはselectedPromptIdが無効');
-    return;
-  }
+// 古いチャット関連関数は削除
 
-  fetch(`${API_BASE_URL}/prompts/${selectedPromptId}/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message })
-  })
-    .then(() => {
-      input.value = '';
-      return fetchPromptList();
-    })
-    .then(() => {
-      if (selectedPromptId) {
-        fetchChatHistory(selectedPromptId);
-      } else {
-        console.warn('再取得後の selectedPromptId が null のままです');
-      }
-    });
-}
-
-// Chat履歴を呼び出す関数
-function fetchChatHistory(promptId) {
-  console.log('Chat履歴取得：promptId =', promptId);
-
-  // タイトルを取得するんご
-  fetch(`${API_BASE_URL}/prompts/${promptId}/title`)
-    .then(res => res.json())
-    .then(title => {
-      const chatPrompt = document.getElementById('chatPrompt')
-      chatPrompt.innerHTML = '';
-      const selectedPrompt = document.createElement('div');
-      selectedPrompt.style.fontWeight = 'bold';
-      selectedPrompt.textContent = title.title;
-      chatPrompt.appendChild(selectedPrompt);
-    })
-  
-  // 修正履歴を取得するんご！
-  fetch(`${API_BASE_URL}/prompts/${promptId}/chat`)
-    .then(res => {
-      return res.json();
-    })
-    .then(messages => {
-      console.log('受信メッセージ数:', messages.length);
-      const chatLog = document.getElementById('chatLog');
-      chatLog.innerHTML = '';
-      messages.forEach(({ id: chatId, message }, i) => {
-        // チャットと削除ボタンのコンテナ
-        const wrapper = document.createElement('div');
-        wrapper.style.display = 'flex';
-        wrapper.style.alignItems = 'center';
-        wrapper.style.gap = '8px';
-        // チャット
-        const bubble = document.createElement('div');
-        bubble.className = 'chat-bubble';
-        bubble.textContent = message;
-        // 削除ボタン
-        const icon = document.createElement('i');
-        icon.className = 'fas fa-trash'; // FontAwesome用クラス
-        icon.onclick = () => deleteChatMessage(promptId, chatId);
-
-        wrapper.appendChild(bubble);
-        wrapper.appendChild(icon);
-        chatLog.appendChild(wrapper);
-        console.log(`表示メッセージ[${i}]:`, message);
-      });
-    })
-    .catch(err => {
-      console.error('fetchChatHistoryエラー:', err);
-    });
-}
-
-// チャットを削除する関数
-function deleteChatMessage(promptId, chatId) {
-  if (!confirm('このチャットを削除しますか？')) return;
-
-  fetch(`${API_BASE_URL}/prompts/${promptId}/chat/${chatId}`, {
-    method: 'DELETE'
-  })
-    .then(res => {
-      if (!res.ok) throw new Error('削除に失敗しました');
-      return res.json();
-    })
-    .then(() => {
-      fetchChatHistory(promptId); // チャット再取得
-    })
-    .catch(err => {
-      alert('削除に失敗しました');
-      console.error('削除エラー:', err);
-    });
-}
-
-// ページ読み込み時の更新内容
 // === 道場 (dojo) 機能 ===
 // タブ切り替え時に「入場中なら確認」するため公開
 window.isDojoActive = () => dojoState.active;
@@ -759,7 +746,7 @@ function startDojo() {
 
 function presentDojoQuestion() {
   if (!dojoState.active) return;
-  
+
   // 出題済みプールが空になったら終了
   if (!dojoState.remaining || dojoState.remaining.length === 0) {
     document.getElementById('dojoLoadingSpinner').style.display = 'none';
@@ -778,7 +765,7 @@ function presentDojoQuestion() {
   // ランダムで1つ取り出す
   const idx = Math.floor(Math.random() * dojoState.remaining.length);
   const term = dojoState.remaining[idx];
-  
+
   // プールから削除（次は出題しない）
   dojoState.remaining.splice(idx, 1);
   dojoState.currentTerm = term;
@@ -833,14 +820,14 @@ function showDojoExplanation() {
 
   const expArea = document.getElementById('dojoExplanationArea');
   expArea.innerHTML = renderMarkdownToHTML(dojoState.currentExplanation);
-  
+
   // ○×ボタン表示
   document.getElementById('dojoFeedbackButtons').style.display = 'block';
 }
 
 function markDojoAnswer(isCorrect) {
   if (!dojoState.currentTerm) return;
-  
+
   if (isCorrect) {
     dojoState.correct += 1;
     // 習熟度を+10
@@ -862,7 +849,7 @@ function markDojoAnswer(isCorrect) {
 
 function endDojo() {
   dojoState.active = false;
-  
+
   // 画面要素のリセット（退場後は出題開始を再表示）
   document.getElementById('dojoLoadingSpinner').style.display = 'none';
   document.getElementById('dojoExitBtn').style.display = 'none';
@@ -907,7 +894,21 @@ window.onload = () => {
 
   document.getElementById('sortSelect').addEventListener('change', updateTermList);
 
-  // スマホ幅では初期状態でサイドバーを閉じる
+  // モバイル初期状態のチェック（リサイズリスナーは削除）
   closeSidebarIfMobile();
-  window.addEventListener('resize', closeSidebarIfMobile);
+
+  // スマホ画面でサイドバーの外側をタップしたら閉じる
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth < 768) {
+      const sidebar = document.querySelector('.sidebar');
+      const menuButton = document.getElementById('menuButton');
+
+      if (sidebar && !sidebar.classList.contains('hidden')) {
+        // クリックされたのがサイドバー内でもメニューボタンでもない場合
+        if (!sidebar.contains(e.target) && !menuButton.contains(e.target)) {
+          sidebar.classList.add('hidden');
+        }
+      }
+    }
+  });
 };

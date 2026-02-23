@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,6 +8,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
+
 <body>
 
   <!-- 上部ヘッダー -->
@@ -17,13 +19,9 @@
 
   <!-- メインアプリレイアウト -->
   <div class="app-container">
-    
+
     <!-- サイドバー -->
     <aside class="sidebar">
-      <div class="sidebar-header">
-        <button id="sidebarMenuButton" class="sidebar-menu-button" onclick="toggleSidebar()">☰</button>
-        <span class="sidebar-title">メニュー</span>
-      </div>
       <ul>
         <li class="tab active" data-tab="wordTab">単語の管理</li>
         <li class="tab" data-tab="dojoTab">道場</li>
@@ -34,7 +32,7 @@
 
     <!-- メインコンテンツ -->
     <main class="page-container">
-      
+
       <!-- タブ1: 単語 -->
       <div id="wordTab" class="tab-content active">
         <h2>単語の登録</h2>
@@ -74,7 +72,7 @@
       <div id="promptTab" class="tab-content" style="display: none;">
         <div class="layout">
 
-          <!-- 左側：プロンプト入力＋リスト -->
+          <!-- プロンプト入力＋リスト -->
           <div class="main-column">
             <h2>プロンプト作成</h2>
             <input id="promptTitleInput" type="text" placeholder="プロンプトタイトル" class="prompt-input" />
@@ -86,18 +84,6 @@
 
             <h2>登録済みのプロンプト</h2>
             <div id="promptList"></div>
-          </div>
-
-          <!-- 右側：チャット欄 -->
-          <div class="chat-column">
-            <h2>プロンプト修正</h2>
-            <div id="chatSection">
-              <div id="chatPrompt"></div>
-              <div id="chatLog">
-              </div>
-              <textarea id="chatInput" placeholder="ここに修正要望を入力してください..."></textarea>
-              <button id="chatSendBtn" onclick="sendChatMessage()">送信</button>
-            </div>
           </div>
         </div>
       </div>
@@ -111,14 +97,14 @@
             <strong class="section-title">タグ選択：</strong>
             <div id="dojoTagCheckboxes"></div>
           </div>
-          <div style="margin-top:12px;">
+          <div class="dojo-setting-row" style="margin-top:12px;">
             <label class="section-title">最大出題数：</label>
-            <input type="number" id="dojoMaxQuestions" min="1" placeholder="未入力で全て" style="width:100px; margin-left:8px; padding:4px 8px;" title="空欄の場合は該当単語を全て出題">
-            <span style="margin-left:4px; color:#666;">件（未入力で全て）</span>
+            <input type="number" id="dojoMaxQuestions" min="1" placeholder="未入力で全て"
+              style="width:100px; padding:4px 8px;" title="空欄の場合は該当単語を全て出題">
           </div>
-          <div style="margin-top:12px;">
+          <div class="dojo-setting-row" style="margin-top:12px;">
             <button id="dojoStartBtn">出題開始</button>
-            <button id="dojoExitBtn" style="margin-left:8px; display:none;">退場</button>
+            <button id="dojoExitBtn" style="display:none;">退場</button>
           </div>
         </div>
 
@@ -234,4 +220,5 @@
   </script>
 
 </body>
+
 </html>

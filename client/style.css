@@ -1,5 +1,6 @@
 /* === 全体共通 === */
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -8,9 +9,18 @@ html, body {
   color: #333;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* === ヘッダーとレイアウト構成 === */
@@ -21,6 +31,8 @@ html, body {
   background: none;
   border: none;
   color: white;
+  display: inline-block;
+  /* 常に表示 */
 }
 
 .app-header {
@@ -29,6 +41,11 @@ html, body {
   font-size: 30px;
   padding: 20px 36px;
   font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 1001;
+  /* サイドバー(1000)より上に配置 */
+  box-sizing: border-box;
 }
 
 .app-container {
@@ -43,77 +60,59 @@ html, body {
   background-color: #f1f1f1;
   padding: 20px;
   box-sizing: border-box;
-  min-height: inherit;
-  transition: transform 0.3s ease-in-out, width 0.3s ease-in-out, padding 0.3s ease-in-out;
+  position: fixed;
+  top: 76px;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  transition: transform 0.3s ease-in-out;
   transform: translateX(0);
 }
 
 .sidebar.hidden {
   transform: translateX(-100%);
-  width: 0;
-  padding: 0;
-  overflow: hidden;
+  /* width: 0, padding: 0, overflow: hidden は削除して移動のみにする */
 }
 
-.sidebar.hidden + .page-container {
-  max-width: 1000px;
-  width: auto;
-  margin: 0 auto;
-  padding-left: 20px;
-}
-
-/* PC用の折りたたみ状態（ハンバーガーだけ残す） */
-.sidebar.collapsed {
-  width: auto;
-  padding-right: 16px;
-  padding-left: 16px;
-}
-
-.sidebar.collapsed ul {
-  display: none;
-}
-
-.sidebar.collapsed .sidebar-title {
-  display: none;
-}
-
-/* 中央寄せ＆最大幅制限は右側のコンテンツだけ */
+/* PC ではサイドバーが表示されている間はコンテンツを右に寄せる */
 .page-container {
-  flex: 1;
-  max-width: 1000px;
-  margin: 0 auto;
+  /* flex: 1; を削除し、幅を計算して中央寄せの設定を追加 */
+  width: calc(100% - 220px);
+  margin-left: 220px;
   padding: 20px;
+  transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out;
+
+  /* 内部のコンテンツを中央に寄せる */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* 横方向の中央寄せ */
 }
+
+/* 各タブのコンテンツに最大幅を設定 */
+.tab-content {
+  width: 100%;
+  max-width: 1000px;
+}
+
+/* サイドバーが隠れている時は全体で中央寄せ */
+.sidebar.hidden+.page-container {
+  width: 100%;
+  margin-left: 0;
+}
+
+/* 不要なスタイルを削除 */
 
 .sidebar ul {
   list-style: none;
   padding: 0;
 }
 
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.sidebar-title {
-  font-weight: bold;
-  font-size: 18px;
-  color: #333;
-}
-
-.sidebar-menu-button {
-  display: none; /* デフォルトは非表示（PC用は後述のメディアクエリで表示） */
-  font-size: 22px;
-  width: 38px;
-  height: 38px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  background-color: transparent;
-  color: #333;
-  cursor: pointer;
+/* サイドバーヘッダーを削除したため不要な項目を整理 */
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 10px;
 }
 
 .sidebar .tab {
@@ -164,21 +163,32 @@ html, body {
 
 /* === コンテンツデザイン === */
 
-h1, h2 {
+h1,
+h2 {
   color: #2c3e50;
 }
 
 /* 共通フォームサイズ調整 */
-input, select, textarea, button {
-  font-size: 17px;     /* ←文字サイズ */
-  padding: 10px 12px;  /* ←入力欄の高さ */
-  border-radius: 10px;  /* ←角丸（好みで調整） */
+input,
+select,
+textarea,
+button {
+  font-size: 17px;
+  /* ←文字サイズ */
+  padding: 10px 12px;
+  /* ←入力欄の高さ */
+  border-radius: 10px;
+  /* ←角丸（好みで調整） */
 }
 
-input[type="text"], textarea {
-  width: 280px;
-  max-width: 100%;
+input[type="text"],
+textarea {
+  width: 100%;
+  max-width: 400px;
+  box-sizing: border-box;
+  /* パディングを含める */
   border: 2px solid #ccc;
+  margin-bottom: 10px;
 }
 
 button {
@@ -227,7 +237,7 @@ select {
   padding: 16px;
   margin-top: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 #questionText {
@@ -255,7 +265,7 @@ ul#wordList li {
   background-color: #fdfdfd;
   padding: 15px 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   margin-bottom: 20px;
 }
 
@@ -265,50 +275,103 @@ ul#wordList li {
 }
 
 .term-row {
-  display: grid;
-  grid-template-columns: 2fr 2fr 2fr auto;
+  display: flex;
   align-items: center;
-  padding: 10px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  /* 上下パディングを増やしてゆとりを持たせる */
   background-color: #fff;
   border: 1px solid #ddd;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 6px;
+  /* カード同士の間隔を少し狭める */
 }
 
 .term-word {
   font-weight: bold;
-  font-size: 18px;
+  font-size: 16px;
   color: #2c3e50;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .term-tag {
   background-color: #eef;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 15px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 13px;
   color: #3366cc;
-  display: inline-block;
-  width: fit-content;
-  max-width: max-content;
   white-space: nowrap;
 }
 
 .term-proficiency {
-  margin-top: 4px;
-  font-size: 16px;
+  width: 100px;
+  flex-shrink: 0;
 }
 
-.term-action button {
-  background-color: #3498db;
+.proficiency-bar-container {
+  width: 100%;
+  background-color: #eee;
+  height: 20px;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.proficiency-bar-fill {
+  height: 100%;
+  transition: width 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.proficiency-text {
+  font-size: 11px;
   color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
+  font-weight: bold;
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
 }
 
-.term-action button:hover {
-  background-color: #2980b9;
+.term-action {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  padding: 6px;
+  margin: 0;
+  cursor: pointer;
+  font-size: 18px;
+  color: #64748b;
+  transition: color 0.2s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn:hover {
+  transform: scale(1.1);
+  background: none;
+}
+
+.delete-btn:hover {
+  color: #ef4444;
+}
+
+.generate-btn:hover {
+  color: #3498db;
 }
 
 #mainContentWrapper {
@@ -323,7 +386,7 @@ ul#wordList li {
   padding: 12px;
   margin-top: 5px;
   position: relative;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   animation: fadeIn 0.3s ease-in-out;
 }
 
@@ -402,11 +465,24 @@ ul#wordList li {
   min-height: 0;
 }
 
-.dojo-question-content p:first-child { margin-top: 0; }
-.dojo-question-content p:last-child { margin-bottom: 0; }
+.dojo-question-content p:first-child {
+  margin-top: 0;
+}
 
-.dojo-error-message { color: #b91c1c; margin-bottom: 12px; }
-.dojo-error-hint { color: #64748b; font-size: 0.9rem; margin: 0 0 12px 0; }
+.dojo-question-content p:last-child {
+  margin-bottom: 0;
+}
+
+.dojo-error-message {
+  color: #b91c1c;
+  margin-bottom: 12px;
+}
+
+.dojo-error-hint {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0 0 12px 0;
+}
 
 .dojo-explanation-area {
   background: #fffbeb;
@@ -420,8 +496,13 @@ ul#wordList li {
   line-height: 1.6;
 }
 
-.dojo-explanation-area p:first-child { margin-top: 0; }
-.dojo-explanation-area p:last-child { margin-bottom: 0; }
+.dojo-explanation-area p:first-child {
+  margin-top: 0;
+}
+
+.dojo-explanation-area p:last-child {
+  margin-bottom: 0;
+}
 
 .dojo-actions {
   margin-top: 12px;
@@ -437,8 +518,13 @@ ul#wordList li {
   transition: opacity 0.2s, transform 0.1s;
 }
 
-.dojo-btn:hover { opacity: 0.92; }
-.dojo-btn:active { transform: scale(0.98); }
+.dojo-btn:hover {
+  opacity: 0.92;
+}
+
+.dojo-btn:active {
+  transform: scale(0.98);
+}
 
 .dojo-btn-primary {
   background: #0ea5e9;
@@ -452,7 +538,10 @@ ul#wordList li {
   margin-top: 16px;
 }
 
-.dojo-feedback-buttons .dojo-btn { flex: 1; min-width: 120px; }
+.dojo-feedback-buttons .dojo-btn {
+  flex: 1;
+  min-width: 120px;
+}
 
 .dojo-btn-correct {
   background: #22c55e;
@@ -488,7 +577,7 @@ ul#wordList li {
   border-radius: 12px;
   padding: 16px;
   text-align: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .dojo-stat-card.dojo-stat-correct {
@@ -509,8 +598,13 @@ ul#wordList li {
   line-height: 1.2;
 }
 
-.dojo-stat-correct .dojo-stat-value { color: #15803d; }
-.dojo-stat-wrong .dojo-stat-value { color: #b91c1c; }
+.dojo-stat-correct .dojo-stat-value {
+  color: #15803d;
+}
+
+.dojo-stat-wrong .dojo-stat-value {
+  color: #b91c1c;
+}
 
 .dojo-stat-label {
   font-size: 0.85rem;
@@ -561,36 +655,151 @@ ul#wordList li {
   color: #64748b;
 }
 
-/* === レスポンシブレイアウト === */
 @media (max-width: 768px) {
-  .app-container {
-    flex-direction: column;
+  .app-header {
+    font-size: 24px;
+    padding: 15px 20px;
+    height: 60px;
+    /* 高さを固定して計算しやすくする */
+    display: flex;
+    align-items: center;
   }
 
-  .page-container {
-    max-width: 100%;
-    padding: 16px;
+  #menuButton {
+    font-size: 20px;
+    margin-right: 12px;
   }
 
   .sidebar {
-    position: fixed;
-    top: 72px; /* ヘッダー高さに合わせる */
-    left: 0;
-    height: calc(100% - 72px);
-    z-index: 1000;
+    top: 60px;
+    /* ヘッダーの高さに合わせる */
+    height: calc(100vh - 60px);
+  }
+
+  .page-container {
+    margin-left: 0;
+    padding: 12px;
+  }
+
+  /* フォームとフィルタの調整 */
+  .control-section {
+    padding: 12px;
+  }
+
+  /* 単語登録フォーム */
+  #wordTab>div:first-of-type {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  #wordTab>div:first-of-type button {
+    margin-left: 0;
+    width: 100%;
+    padding: 12px;
+  }
+
+  /* フィルタ部分（単語管理） */
+  #tagCheckboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 10px;
+  }
+
+  #tagCheckboxes label {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* 単語リストのモバイル対応（1行を維持） */
+  .term-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .term-word {
+    font-size: 14px;
+    /* 少し小さく */
+    flex: 1.5;
+    /* 単語の表示エリアを優先 */
+  }
+
+  .term-tag {
+    font-size: 10px;
+    padding: 1px 4px;
+    max-width: 60px;
+    /* タグが長い場合に備えて制限 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .term-proficiency {
+    width: 50px;
+    /* さらにコンパクトに */
+  }
+
+  .page-container {
+    margin-left: 0;
+    padding: 10px;
+    max-width: 100% !important;
+    /* モバイルでは全幅 */
+  }
+
+  /* 道場タブのモバイル対応 */
+  #dojoTagCheckboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 10px;
+  }
+
+  #dojoTagCheckboxes label {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* 出題数設定のスタッキング */
+  .dojo-setting-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  #dojoMaxQuestions {
+    width: 100% !important;
+    max-width: 150px;
+    margin-left: 0 !important;
+  }
+
+  #dojoTab button {
+    width: 100%;
+    margin-left: 0 !important;
+    padding: 12px;
+  }
+
+  .dojo-result-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .dojo-rate-ring {
+    width: 100px;
+    height: 100px;
   }
 }
 
 @media (min-width: 768px) {
-  /* PC ではサイドバー内のメニューボタンを使い、ヘッダーのボタンは非表示 */
-  #menuButton {
-    display: none;
-  }
 
-  .sidebar-menu-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+  /* PC でもヘッダーボタンを使用 */
+  #menuButton {
+    display: inline-block;
   }
 }
 
@@ -611,56 +820,39 @@ ul#wordList li {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* === プロンプト編集画面 === */
-/* プロンプト編集の3カラムレイアウト用 */
 .layout {
   display: flex;
-  height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: calc(100vh - 76px);
   align-items: flex-start;
 }
 
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+    width: 100%;
+  }
+}
+
 .main-column {
-  flex: 2;
-  padding: 16px;
-  border-right: 1px solid #ccc;
-  overflow-y: auto;
-}
-
-.chat-column {
-  flex: 1.5;
-  padding: 16px;
-  background-color: #f9f9f9;
-  overflow-y: auto;
-  border-left: 1px solid #ccc;
-}
-
-#chatSection {
   width: 100%;
-  background-color: #ffffff;
-  border: 1px solid #ccc;
+  max-width: 800px;
+  margin: 0 auto;
   padding: 16px;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  height: 750px;
-  box-sizing: border-box;
-}
-
-#chatLog {
-  flex: 1;
   overflow-y: auto;
-  padding: 10px;
-  background-color: #f4f4f4;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
 
 /* プロンプト作成部分 */
@@ -711,52 +903,10 @@ textarea.prompt-input {
   border: 2px solid black;
 }
 
-/* チャット部分 */
-.chat-bubble {
-  background-color: #ffffff;
-  border-radius: 10px;
-  padding: 10px 14px;
-  margin-bottom: 10px;
-  max-width: 80%;
-  position: relative;
-  font-size: 14px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-}
-
-.chat-bubble::after {
-  content: "";
-  position: absolute;
-  left: -10px;
-  top: 10px;
-  border-width: 10px;
-  border-style: solid;
-  border-color: transparent #ffffff transparent transparent;
-}
-
-.chat-bubble .fa-trash {
-  position: absolute;
-  bottom: 10px;
-  right: 40px;
-  color: #999;
-  transition: color 0.2s;
-  margin-left: 3px;
-  cursor: pointer;
-}
-
-.chat-bubble .fa-trash:hover {
-  color: red;
-}
-
-#chatInput {
-  resize: none;
-  height: 60px;
-  padding: 10px;
-  font-size: 14px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-family: inherit;
-}
-
+/* removed */
+/* removed */
+/* removed */
+/* removed */
 #chatSendBtn {
   align-self: flex-end;
   padding: 8px 16px;
