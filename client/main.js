@@ -885,12 +885,7 @@ window.onload = () => {
   createTagCheckboxes(); // フィルター用タグ候補
   populateDojoTagCheckboxes(); // 道場用タグチェックボックス
   initDojoTab();
-  fetchPromptList().then(() => {  // 起動時にプロンプト一覧を取得
-    if (selectedPromptId) {
-      fetchChatHistory(selectedPromptId); // チャット記録を画面に表示
-      console.warn('初期化時の selectedPromptId が null のままです');
-    }
-  });
+  fetchPromptList(); // 起動時にプロンプト一覧を取得
 
   document.getElementById('sortSelect').addEventListener('change', updateTermList);
 

@@ -1088,15 +1088,6 @@ textarea.prompt-input {
   background-color: #f0f9ff;
 }
 
-/* removed */
-/* removed */
-/* removed */
-/* removed */
-#chatSendBtn {
-  align-self: flex-end;
-  padding: 8px 16px;
-}
-
 /* スマホ表示時の微調整 */
 @media (max-width: 768px) {
 

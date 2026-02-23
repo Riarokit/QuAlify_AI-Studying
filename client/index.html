@@ -72,33 +72,22 @@
           </div>
         </fieldset>
 
-        <div id="mainContentWrapper">
-          <div id="wordListContainer">
-            <h2>登録した単語</h2>
-            <div id="wordList"></div>
-            <div id="questionText" style="margin-top: 20px; color: red;"></div>
-          </div>
-        </div>
+        <h2>登録した単語</h2>
+        <div id="wordList"></div>
       </div>
 
       <!-- タブ2: プロンプト -->
       <div id="promptTab" class="tab-content" style="display: none;">
-        <div class="layout">
+        <h2>プロンプト作成</h2>
+        <input id="promptTitleInput" type="text" placeholder="プロンプトタイトル" class="prompt-input" />
+        <textarea id="promptContentInput" placeholder="プロンプト内容" rows="6" class="prompt-input"></textarea>
 
-          <!-- プロンプト入力＋リスト -->
-          <div class="main-column">
-            <h2>プロンプト作成</h2>
-            <input id="promptTitleInput" type="text" placeholder="プロンプトタイトル" class="prompt-input" />
-            <textarea id="promptContentInput" placeholder="プロンプト内容" rows="6" class="prompt-input"></textarea>
-
-            <div class="form-actions">
-              <button onclick="createPrompt()">新規作成</button>
-            </div>
-
-            <h2>登録済みのプロンプト</h2>
-            <div id="promptList"></div>
-          </div>
+        <div class="form-actions">
+          <button onclick="createPrompt()">新規作成</button>
         </div>
+
+        <h2>登録済みのプロンプト</h2>
+        <div id="promptList"></div>
       </div>
 
       <!-- タブ3: 道場 -->

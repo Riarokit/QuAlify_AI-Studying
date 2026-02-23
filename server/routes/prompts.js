@@ -79,38 +79,4 @@ router.delete('/:promptId', (req, res) => {
   res.json({ success: true });
 });
 
-// チャット履歴の保存
-router.post('/:promptId/chat', (req, res) => {
-  const { promptId } = req.params;
-  const { message } = req.body;
-  if (!message) return res.status(400).json({ error: 'message is required' });
-
-  db.prepare('INSERT INTO prompt_chat_logs (prompt_id, message) VALUES (?, ?)').run(promptId, message);
-  res.json({ success: true });
-});
-
-// チャットのタイトルを取得
-router.get('/:promptId/title', (req, res) => {
-  const { promptId } = req.params;
-  const title = db.prepare('SELECT title FROM prompts WHERE id = ?').get(promptId);
-  res.json(title);
-});
-
-// チャット履歴の取得
-router.get('/:promptId/chat', (req, res) => {
-  const { promptId } = req.params;
-  const logs = db.prepare('SELECT id, message FROM prompt_chat_logs WHERE prompt_id = ? ORDER BY created_at').all(promptId);
-  res.json(logs);
-});
-
-// チャットを削除する関数
-router.delete('/:promptId/chat/:chatId', (req, res) => {
-  const { promptId, chatId } = req.params;
-  const result = db.prepare('DELETE from prompt_chat_logs WHERE id = ? AND prompt_id = ?').run(chatId, promptId)
-  if (result.changes === 0) {
-    return res.status(404).json({ error: 'チャットが存在しません' });
-  }
-  res.json({ success: true })
-})
-
 module.exports = router;
