@@ -89,6 +89,14 @@ router.post('/generate-question', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('[生成エラー]', error);
+    const is429 = error.status === 429 || (error.message && error.message.includes('429'));
+    const isQuota = error.message && (error.message.includes('quota') || error.message.includes('Quota'));
+    if (is429 || isQuota) {
+      return res.status(503).json({
+        error: 'APIの利用制限に達しました。しばらく待ってから再試行してください。（無料枠は1日あたりのリクエスト数に上限があります）',
+        code: 'RATE_LIMIT'
+      });
+    }
     res.status(500).json({ error: '問題の生成に失敗しました' });
   }
 });

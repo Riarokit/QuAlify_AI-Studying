@@ -107,40 +107,63 @@
             <div id="dojoTagCheckboxes"></div>
           </div>
           <div style="margin-top:12px;">
+            <label class="section-title">最大出題数：</label>
+            <input type="number" id="dojoMaxQuestions" min="1" placeholder="未入力で全て" style="width:100px; margin-left:8px; padding:4px 8px;" title="空欄の場合は該当単語を全て出題">
+            <span style="margin-left:4px; color:#666;">件（未入力で全て）</span>
+          </div>
+          <div style="margin-top:12px;">
             <button id="dojoStartBtn">出題開始</button>
             <button id="dojoExitBtn" style="margin-left:8px; display:none;">退場</button>
           </div>
         </div>
 
-        <div id="dojoArea">
-          <div style="display: flex; gap: 20px; margin-top: 20px;">
-            <!-- 左側：問題表示 -->
-            <div style="flex: 1;">
-              <h3>問題</h3>
-              <div id="dojoQuestionArea"></div>
-              <div id="dojoLoadingSpinner" style="display: none; text-align: center; padding: 20px;">
-                <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-                <p style="margin-top: 10px; color: #666;">読み込み中...</p>
+        <div id="dojoArea" class="dojo-layout">
+          <!-- 縦並び：問題 → 解説 → フィードバック（スマホでも見やすい） -->
+          <section class="dojo-section dojo-question-section">
+            <h3 class="dojo-section-title">問題</h3>
+            <div class="dojo-question-area">
+              <div id="dojoLoadingSpinner" class="dojo-loading" style="display: none;">
+                <div class="dojo-spinner"></div>
+                <p>読み込み中...</p>
               </div>
-              <div style="margin-top: 12px;">
-                <button id="dojoShowExplanationBtn">解説を見る</button>
-              </div>
+              <div id="dojoQuestionArea" class="dojo-question-content"></div>
             </div>
-            <!-- 右側：解説表示 -->
-            <div style="flex: 1;">
-              <h3>解説</h3>
-              <div id="dojoExplanationArea"></div>
-              <div id="dojoFeedbackButtons" style="margin-top: 12px; display: none;">
-                <button id="dojoCorrectBtn" style="background-color: #4caf50;">○ 正解</button>
-                <button id="dojoWrongBtn" style="background-color: #f44336; margin-left: 8px;">✕ 不正解</button>
-              </div>
+            <div class="dojo-actions">
+              <button id="dojoShowExplanationBtn" class="dojo-btn dojo-btn-primary" style="display:none;">解説を見る</button>
             </div>
-          </div>
+          </section>
 
-          <div id="dojoSummary" style="margin-top:20px; display:none;">
-            <h3>結果</h3>
-            <div id="dojoStats"></div>
-            <canvas id="dojoChart" width="240" height="240"></canvas>
+          <section class="dojo-section dojo-explanation-section">
+            <h3 class="dojo-section-title">解説</h3>
+            <div id="dojoExplanationArea" class="dojo-explanation-area"></div>
+            <div id="dojoFeedbackButtons" class="dojo-feedback-buttons" style="display: none;">
+              <button id="dojoCorrectBtn" class="dojo-btn dojo-btn-correct">○ 正解</button>
+              <button id="dojoWrongBtn" class="dojo-btn dojo-btn-wrong">✕ 不正解</button>
+            </div>
+          </section>
+
+          <div id="dojoSummary" class="dojo-summary" style="display:none;">
+            <h3 class="dojo-section-title">結果</h3>
+            <div class="dojo-result-cards">
+              <div class="dojo-stat-card">
+                <span class="dojo-stat-value" id="dojoStatPresented">0</span>
+                <span class="dojo-stat-label">出題数</span>
+              </div>
+              <div class="dojo-stat-card dojo-stat-correct">
+                <span class="dojo-stat-value" id="dojoStatCorrect">0</span>
+                <span class="dojo-stat-label">正解</span>
+              </div>
+              <div class="dojo-stat-card dojo-stat-wrong">
+                <span class="dojo-stat-value" id="dojoStatWrong">0</span>
+                <span class="dojo-stat-label">不正解</span>
+              </div>
+            </div>
+            <div class="dojo-rate-wrap">
+              <div class="dojo-rate-ring" id="dojoRateRing">
+                <span class="dojo-rate-value" id="dojoRateValue">0%</span>
+              </div>
+              <p class="dojo-rate-label">正解率</p>
+            </div>
           </div>
         </div>
       </div>
@@ -176,6 +199,12 @@
   <script>
     // タブ切り替え機能
     function switchTab(tabName) {
+      // 道場入場中に他タブへ移動しようとしたら確認
+      if (typeof window.isDojoActive === 'function' && window.isDojoActive() && tabName !== 'dojoTab') {
+        if (!confirm('本当に移動しますか？\n（道場を退場すると現在の出題は終了します）')) return;
+        if (typeof window.endDojoFromTab === 'function') window.endDojoFromTab();
+      }
+
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
 

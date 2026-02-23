@@ -286,74 +286,244 @@ ul#wordList li {
   animation: fadeIn 0.3s ease-in-out;
 }
 
-/* === 道場用スタイル === */
-#dojoQuestionArea {
-  background: #f0f8ff;
-  border: 2px solid #3498db;
-  padding: 16px;
-  border-radius: 8px;
-  min-height: 120px;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-#dojoExplanationArea {
-  background: #fffef0;
-  border: 2px solid #f9a825;
-  padding: 16px;
-  border-radius: 8px;
-  min-height: 120px;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-#dojoFeedbackButtons {
+/* === 道場用スタイル（縦並び・スマホ対応） === */
+.dojo-layout {
+  margin-top: 20px;
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 720px;
+}
+
+.dojo-section {
+  width: 100%;
+}
+
+.dojo-section-title {
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.dojo-loading {
+  text-align: center;
+  padding: 28px 20px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+}
+
+.dojo-loading p {
+  margin: 12px 0 0 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.dojo-spinner {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3498db;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* 問題エリアの青枠（スピナーと問題文の共通コンテナ） */
+.dojo-question-area {
+  background: #f0f9ff;
+  border: 1px solid #7dd3fc;
+  padding: 18px 20px;
+  border-radius: 12px;
+  min-height: 120px;
+  max-height: 50vh;
+  overflow-y: auto;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.dojo-question-area .dojo-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+  margin: -4px 0 0 0;
+  padding: 20px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.dojo-question-content {
+  min-height: 0;
+}
+
+.dojo-question-content p:first-child { margin-top: 0; }
+.dojo-question-content p:last-child { margin-bottom: 0; }
+
+.dojo-error-message { color: #b91c1c; margin-bottom: 12px; }
+.dojo-error-hint { color: #64748b; font-size: 0.9rem; margin: 0 0 12px 0; }
+
+.dojo-explanation-area {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  padding: 18px 20px;
+  border-radius: 12px;
+  min-height: 80px;
+  max-height: 60vh;
+  overflow-y: auto;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.dojo-explanation-area p:first-child { margin-top: 0; }
+.dojo-explanation-area p:last-child { margin-bottom: 0; }
+
+.dojo-actions {
   margin-top: 12px;
 }
 
-#dojoFeedbackButtons button {
-  padding: 10px 16px;
-  border-radius: 6px;
+.dojo-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
   border: none;
-  color: white;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
-  flex: 1;
+  font-size: 0.95rem;
+  transition: opacity 0.2s, transform 0.1s;
 }
 
-#dojoCorrectBtn {
-  background-color: #4caf50;
+.dojo-btn:hover { opacity: 0.92; }
+.dojo-btn:active { transform: scale(0.98); }
+
+.dojo-btn-primary {
+  background: #0ea5e9;
+  color: #fff;
 }
 
-#dojoCorrectBtn:hover {
-  background-color: #45a049;
-}
-
-#dojoWrongBtn {
-  background-color: #f44336;
-}
-
-#dojoWrongBtn:hover {
-  background-color: #da190b;
-}
-
-#dojoShowExplanationBtn {
-  padding: 8px 12px;
-  border-radius: 6px;
-}
-
-#dojoSummary {
+.dojo-feedback-buttons {
   display: flex;
-  gap: 20px;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
 }
 
-#dojoChart {
+.dojo-feedback-buttons .dojo-btn { flex: 1; min-width: 120px; }
+
+.dojo-btn-correct {
+  background: #22c55e;
+  color: #fff;
+}
+
+.dojo-btn-wrong {
+  background: #ef4444;
+  color: #fff;
+}
+
+/* 結果エリア（カード＋正解率リング） */
+.dojo-summary {
+  margin-top: 8px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.dojo-summary .dojo-section-title {
+  margin-bottom: 16px;
+}
+
+.dojo-result-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.dojo-stat-card {
   background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.dojo-stat-card.dojo-stat-correct {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.dojo-stat-card.dojo-stat-wrong {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.dojo-stat-value {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.dojo-stat-correct .dojo-stat-value { color: #15803d; }
+.dojo-stat-wrong .dojo-stat-value { color: #b91c1c; }
+
+.dojo-stat-label {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-top: 4px;
+  display: block;
+}
+
+.dojo-rate-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.dojo-rate-ring {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: conic-gradient(#22c55e 0deg, #22c55e calc(var(--rate, 0) * 3.6deg), #e2e8f0 calc(var(--rate, 0) * 3.6deg), #e2e8f0 360deg);
+  transition: background 0.5s ease;
+}
+
+.dojo-rate-ring::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px #e2e8f0;
+}
+
+.dojo-rate-value {
+  position: relative;
+  z-index: 1;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.dojo-rate-label {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+@media (max-width: 480px) {
+  .dojo-result-cards {
+    grid-template-columns: 1fr;
+  }
 }
 
 .question-bubble::before {

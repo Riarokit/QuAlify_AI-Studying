@@ -326,7 +326,12 @@ function fetchQuestionForWord(word) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ word, apiKey, model })
-  }).then(res => res.json());
+  }).then(res => res.json().then(body => {
+    if (!res.ok) {
+      return Promise.reject(new Error(body.error || '問題の取得に失敗しました'));
+    }
+    return body;
+  }));
 }
 
 // MarkdownをHTMLに変換する関数
@@ -636,6 +641,19 @@ function deleteChatMessage(promptId, chatId) {
 
 // ページ読み込み時の更新内容
 // === 道場 (dojo) 機能 ===
+// タブ切り替え時に「入場中なら確認」するため公開
+window.isDojoActive = () => dojoState.active;
+window.endDojoFromTab = () => endDojo();
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 const dojoState = {
   active: false,
   candidates: [],
@@ -695,14 +713,22 @@ function startDojo() {
       const pool = terms.filter(t => selectedTags.includes(t.tag));
       if (!pool || pool.length === 0) return alert('該当する単語が見つかりません');
 
+      // 最大出題数（未入力・0なら全て）
+      const maxInput = document.getElementById('dojoMaxQuestions');
+      const maxNum = maxInput && maxInput.value.trim() !== '' ? parseInt(maxInput.value, 10) : 0;
+      const limit = (maxNum > 0) ? Math.min(maxNum, pool.length) : pool.length;
+      const shuffled = shuffleArray([...pool]);
+      const remainingPool = shuffled.slice(0, limit);
+
       dojoState.active = true;
-      dojoState.candidates = pool;
-      dojoState.remaining = [...pool];  // 出題済みを除外するプール
+      dojoState.candidates = remainingPool;
+      dojoState.remaining = [...remainingPool];
       dojoState.presented = 0;
       dojoState.correct = 0;
 
       document.getElementById('dojoExitBtn').style.display = 'inline-block';
-      document.getElementById('dojoShowExplanationBtn').style.display = 'inline-block';
+      document.getElementById('dojoStartBtn').style.display = 'none'; // 入場中は出題開始を非表示
+      document.getElementById('dojoShowExplanationBtn').style.display = 'none'; // 問題表示後に表示
       document.getElementById('dojoQuestionArea').innerHTML = '';
       document.getElementById('dojoExplanationArea').innerHTML = '';
       document.getElementById('dojoFeedbackButtons').style.display = 'none';
@@ -722,9 +748,17 @@ function presentDojoQuestion() {
   // 出題済みプールが空になったら終了
   if (!dojoState.remaining || dojoState.remaining.length === 0) {
     document.getElementById('dojoLoadingSpinner').style.display = 'none';
+    document.getElementById('dojoQuestionArea').style.display = 'block';
+    document.getElementById('dojoShowExplanationBtn').style.display = 'none';
     endDojo();
     return;
   }
+
+  // 問題取得中は青枠内でローディング表示・問題文エリアは非表示
+  document.getElementById('dojoLoadingSpinner').style.display = 'flex';
+  document.getElementById('dojoQuestionArea').style.display = 'none';
+  document.getElementById('dojoQuestionArea').innerHTML = '';
+  document.getElementById('dojoShowExplanationBtn').style.display = 'none';
 
   // ランダムで1つ取り出す
   const idx = Math.floor(Math.random() * dojoState.remaining.length);
@@ -739,12 +773,18 @@ function presentDojoQuestion() {
     .then(data => {
       dojoState.presented += 1;
 
-      // ローディング非表示
+      // ローディング非表示・問題文を青枠内に表示
       document.getElementById('dojoLoadingSpinner').style.display = 'none';
-
-      // 問題表示
       const qArea = document.getElementById('dojoQuestionArea');
-      qArea.innerHTML = renderMarkdownToHTML(`${data.question}`);
+      qArea.style.display = 'block';
+
+      // 問題＋選択肢を単語管理タブと同じ形式で組み立て（択ごとに改行される）
+      let questionMarkdown = `**問題：**\n${data.question || ''}`;
+      if (Array.isArray(data.options) && data.options.length > 0) {
+        questionMarkdown += "\n\n**選択肢：**\n";
+        questionMarkdown += data.options.map(opt => `- ${opt}`).join("\n");
+      }
+      qArea.innerHTML = renderMarkdownToHTML(questionMarkdown);
 
       // 解説領域をリセット
       const expArea = document.getElementById('dojoExplanationArea');
@@ -753,11 +793,23 @@ function presentDojoQuestion() {
 
       // 解説データを保存（ボタン押時に使用）
       dojoState.currentExplanation = data.explanation;
+
+      // 問題が表示されたタイミングで解説ボタンを表示
+      document.getElementById('dojoShowExplanationBtn').style.display = 'inline-block';
     })
     .catch(err => {
       console.error('presentDojoQuestionエラー:', err);
       document.getElementById('dojoLoadingSpinner').style.display = 'none';
-      alert('問題の取得に失敗しました');
+      const qArea = document.getElementById('dojoQuestionArea');
+      qArea.style.display = 'block';
+      const msg = err.message || '問題の取得に失敗しました';
+      const safeMsg = ('' + msg).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      qArea.innerHTML = `<p class="dojo-error-message"><strong>エラー</strong><br>${safeMsg}</p><p class="dojo-error-hint">この語句は出題リストに戻しました。しばらく待ってから「次の問題へ」で再度お試しください。</p><button type="button" class="dojo-btn dojo-btn-primary" onclick="presentDojoQuestion()">次の問題へ</button>`;
+      document.getElementById('dojoShowExplanationBtn').style.display = 'none';
+      // 取得失敗した語句をプールに戻して再試行できるようにする
+      if (term) dojoState.remaining.push(term);
+      dojoState.presented = Math.max(0, dojoState.presented - 1);
+      alert(msg);
     });
 }
 
@@ -796,9 +848,10 @@ function markDojoAnswer(isCorrect) {
 function endDojo() {
   dojoState.active = false;
   
-  // 画面要素のリセット
+  // 画面要素のリセット（退場後は出題開始を再表示）
   document.getElementById('dojoLoadingSpinner').style.display = 'none';
   document.getElementById('dojoExitBtn').style.display = 'none';
+  document.getElementById('dojoStartBtn').style.display = 'inline-block';
   document.getElementById('dojoShowExplanationBtn').style.display = 'none';
   document.getElementById('dojoFeedbackButtons').style.display = 'none';
   document.getElementById('dojoQuestionArea').innerHTML = '';
@@ -809,52 +862,17 @@ function endDojo() {
     correct: dojoState.correct,
     wrong: dojoState.presented - dojoState.correct
   };
+  const rate = stats.presented > 0 ? Math.round((stats.correct / stats.presented) * 100) : 0;
 
-  // 統計表示
-  const statDiv = document.getElementById('dojoStats');
-  statDiv.innerHTML = `出題数: ${stats.presented} / 正解: ${stats.correct} / 正解率: ${stats.presented>0?Math.round((stats.correct/stats.presented)*100):0}%`;
+  // 統計カードと正解率リングを更新
+  document.getElementById('dojoStatPresented').textContent = stats.presented;
+  document.getElementById('dojoStatCorrect').textContent = stats.correct;
+  document.getElementById('dojoStatWrong').textContent = stats.wrong;
+  document.getElementById('dojoRateValue').textContent = rate + '%';
+  const ring = document.getElementById('dojoRateRing');
+  if (ring) ring.style.setProperty('--rate', rate);
+
   document.getElementById('dojoSummary').style.display = 'block';
-
-  // 円グラフ描画
-  const canvas = document.getElementById('dojoChart');
-  drawPieChart(canvas, stats.correct, stats.wrong);
-}
-
-function drawPieChart(canvas, correct, wrong) {
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const total = correct + wrong || 1;
-  const correctAngle = (correct / total) * Math.PI * 2;
-
-  // クリア
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
-  const r = Math.min(cx, cy) - 4;
-
-  // 正解（緑）
-  ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.fillStyle = '#4caf50';
-  ctx.arc(cx, cy, r, 0, correctAngle);
-  ctx.closePath();
-  ctx.fill();
-
-  // 不正解（赤）
-  ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.fillStyle = '#f44336';
-  ctx.arc(cx, cy, r, correctAngle, Math.PI * 2);
-  ctx.closePath();
-  ctx.fill();
-
-  // 中央にテキスト
-  ctx.fillStyle = '#000';
-  ctx.font = '16px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(`正解 ${correct}`, cx, cy - 6);
-  ctx.fillText(`誤答 ${wrong}`, cx, cy + 16);
 }
 
 window.onload = () => {

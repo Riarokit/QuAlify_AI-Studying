@@ -45,26 +45,40 @@ ${instructionText}
 ${formatInstructions}
 `;
 
-  // AI呼び出し
-  const result = await modelInstance.generateContent([prompt]);
-  const response = await result.response;
-  const text = await response.text();
-  console.log('[Geminiの出力]:\n', text);
+  // AI呼び出し（429 のときは指定秒数待って1回だけリトライ）
+  const maxRetries = 1;
+  let lastError;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await modelInstance.generateContent([prompt]);
+      const response = await result.response;
+      const text = await response.text();
+      console.log('[Geminiの出力]:\n', text);
 
-  // マークダウンの ```json ``` を除去
-  const cleanedText = text
-    .replace(/^```json\s*/, '')
-    .replace(/^```\s*/, '')
-    .replace(/\s*```$/, '');
+      const cleanedText = text
+        .replace(/^```json\s*/, '')
+        .replace(/^```\s*/, '')
+        .replace(/\s*```$/, '');
 
-  // 構造化パース
-  const parsed = schema.safeParse(JSON.parse(cleanedText));
-  if (!parsed.success) {
-    console.error("構造化パースに失敗:", parsed.error);
-    throw new Error("構造化パースに失敗しました");
+      const parsed = schema.safeParse(JSON.parse(cleanedText));
+      if (!parsed.success) {
+        console.error("構造化パースに失敗:", parsed.error);
+        throw new Error("構造化パースに失敗しました");
+      }
+      return parsed.data;
+    } catch (err) {
+      lastError = err;
+      const is429 = err.status === 429 || (err.message && err.message.includes('429'));
+      if (is429 && attempt < maxRetries) {
+        const waitMs = 10000; // 10秒待ってリトライ
+        console.warn(`[Gemini] 429 検出。${waitMs / 1000}秒後にリトライします...`);
+        await new Promise(r => setTimeout(r, waitMs));
+        continue;
+      }
+      throw err;
+    }
   }
-
-  return parsed.data;
+  throw lastError;
 }
 
 module.exports = { generateQuestion };
