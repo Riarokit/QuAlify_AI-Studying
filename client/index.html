@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>QuAlify</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -19,6 +20,10 @@
     
     <!-- サイドバー -->
     <aside class="sidebar">
+      <div class="sidebar-header">
+        <button id="sidebarMenuButton" class="sidebar-menu-button" onclick="toggleSidebar()">☰</button>
+        <span class="sidebar-title">メニュー</span>
+      </div>
       <ul>
         <li class="tab active" data-tab="wordTab">単語の管理</li>
         <li class="tab" data-tab="dojoTab">道場</li>

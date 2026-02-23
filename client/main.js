@@ -2,15 +2,30 @@ const API_BASE_URL = window.location.hostname === "localhost"
   ? "http://localhost:3000"
   : "https://qualify-ai-studying.onrender.com";
 
-// サイドバーの表示/非表示切り替え
+// サイドバーの表示/折りたたみ切り替え
 function toggleSidebar() {
-  document.querySelector(".sidebar").classList.toggle("hidden");
+  const sidebar = document.querySelector(".sidebar");
+  if (!sidebar) return;
+
+  if (window.innerWidth < 768) {
+    // モバイルでは完全に出し入れする
+    sidebar.classList.toggle("hidden");
+  } else {
+    // PC ではタブ部分だけを折りたたみ（ハンバーガーは残す）
+    sidebar.classList.toggle("collapsed");
+  }
 }
 
 // 画面幅が狭い場合、サイドバーを閉じる
 function closeSidebarIfMobile() {
+  const sidebar = document.querySelector(".sidebar");
+  if (!sidebar) return;
+
   if (window.innerWidth < 768) {
-    document.querySelector(".sidebar").classList.add("hidden");
+    sidebar.classList.add("hidden");
+    sidebar.classList.remove("collapsed");
+  } else {
+    sidebar.classList.remove("hidden");
   }
 }
 
@@ -891,4 +906,8 @@ window.onload = () => {
   });
 
   document.getElementById('sortSelect').addEventListener('change', updateTermList);
+
+  // スマホ幅では初期状態でサイドバーを閉じる
+  closeSidebarIfMobile();
+  window.addEventListener('resize', closeSidebarIfMobile);
 };
