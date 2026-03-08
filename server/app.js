@@ -11,6 +11,7 @@ const termsRouter = require('./routes/terms');
 const promptsRoutes = require('./routes/prompts');
 const statsRoutes = require('./routes/stats');
 const path = require('path');
+const notebooksRouter = require('./routes/notebooks');
 
 dotenv.config();                  // .env（APIキー管理）を読み込む
 const app = express();            // Expressアプリを初期化
@@ -22,6 +23,8 @@ app.use(express.json());          // JSON形式のリクエストを扱えるよ
 app.use('/terms', termsRouter);   // "/terms"でAPIが動くように設定
 app.use('/prompts', promptsRoutes);  // "/prompts"でAPIが動くように設定
 app.use('/stats', statsRoutes);      // "/stats"でAPIが動くように設定
+app.use('/notebooks', notebooksRouter); // "/notebooks"でAPIが動くように設定
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // uploadsを静的に公開
 
 app.use(express.static(path.join(__dirname, '../client')));  // clientフォルダを静的ファイルとして配信
 

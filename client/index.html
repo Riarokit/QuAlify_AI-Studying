@@ -39,6 +39,9 @@
             style="width: 20px; text-align: center;"></i> プロンプト編集</li>
         <li class="tab" data-tab="statsTab"><i class="fas fa-chart-line" style="width: 20px; text-align: center;"></i>
           記録</li>
+        <li class="tab" data-tab="notebookTab"><i class="fas fa-note-sticky"
+            style="width: 20px; text-align: center;"></i> ノート
+        </li>
         <li class="tab" data-tab="settingsTab"><i class="fas fa-gear" style="width: 20px; text-align: center;"></i> 各種設定
         </li>
       </ul>
@@ -258,6 +261,46 @@
         <p id="modelStatus">🔄 読み込み中…</p>
       </div>
 
+      <!-- タブ6: ノート -->
+      <div id="notebookTab" class="tab-content" style="display:none;">
+        <h2>ノート</h2>
+
+        <div class="control-section">
+          <h3 class="section-title">新しいノートを追加</h3>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <input type="text" id="notebookTitleInput" placeholder="ノートのタイトル" style="flex: 1; min-width: 200px;">
+            <input type="file" id="notebookFileInput" accept="image/*,application/pdf">
+            <button id="notebookUploadBtn" onclick="uploadNote()">アップロード</button>
+          </div>
+        </div>
+
+        <div id="notebookViewer" class="notebook-viewer" style="display:none;">
+          <div class="notebook-header">
+            <button class="nav-btn-mobile prev" onclick="prevNote()"><i class="fa-solid fa-chevron-left"></i></button>
+            <h3 id="currentNoteTitle">タイトル</h3>
+            <div class="header-actions">
+              <button class="nav-btn-mobile next" onclick="nextNote()"><i
+                  class="fa-solid fa-chevron-right"></i></button>
+              <button class="delete-btn" onclick="deleteCurrentNote()"><i class="fa-regular fa-trash-can"></i></button>
+            </div>
+          </div>
+          <div class="notebook-slider-container">
+            <button id="prevNoteBtn" class="slider-arrow prev" onclick="prevNote()">&#10094;</button>
+            <div id="noteContentArea" class="note-content-area">
+              <!-- コンテンツがここに挿入される -->
+            </div>
+            <button id="nextNoteBtn" class="slider-arrow next" onclick="nextNote()">&#10095;</button>
+          </div>
+          <div class="notebook-footer">
+            <span id="notePageIndicator">1 / 1</span>
+          </div>
+        </div>
+
+        <div id="noNotebooksMessage" style="text-align: center; margin-top: 50px; color: #666;">
+          <p>ノートがありません。新しいノートをアップロードしてください。</p>
+        </div>
+      </div>
+
     </main>
   </div>
 
@@ -287,6 +330,11 @@
       // 記録タブを開いたときにグラフを描画
       if (tabName === 'statsTab' && typeof initStatsTab === 'function') {
         initStatsTab();
+      }
+
+      // ノートタブを開いたときに一覧を取得
+      if (tabName === 'notebookTab' && typeof fetchNotebooks === 'function') {
+        fetchNotebooks();
       }
     }
 

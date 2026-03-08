@@ -50,6 +50,14 @@ db.exec(`
     proficiency_after INTEGER,
     created_at DATETIME DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+9 hours'))
   );
+
+  CREATE TABLE IF NOT EXISTS notebooks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    file_type TEXT NOT NULL,
+    created_at DATETIME DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+9 hours'))
+  );
 `);
 
 // 初期プロンプト挿入

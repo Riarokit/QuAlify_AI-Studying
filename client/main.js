@@ -1162,4 +1162,134 @@ window.onload = () => {
       }
     }
   });
+}
+
+// === ノート (notebook) 機能 ===
+let notebookState = {
+  notes: [],
+  currentIndex: 0
 };
+
+function fetchNotebooks() {
+  fetch(`${API_BASE_URL}/notebooks`)
+    .then(res => res.json())
+    .then(data => {
+      notebookState.notes = data;
+      notebookState.currentIndex = 0;
+      updateNotebookUI();
+    })
+    .catch(err => console.error('ノート取得エラー:', err));
+}
+
+function uploadNote() {
+  const titleInput = document.getElementById('notebookTitleInput');
+  const fileInput = document.getElementById('notebookFileInput');
+  const title = titleInput.value.trim();
+  const file = fileInput.files[0];
+
+  if (!title || !file) return alert('タイトルとファイルを選択してください');
+
+  const formData = new FormData();
+  formData.append('title', title);
+  formData.append('file', file);
+
+  const btn = document.getElementById('notebookUploadBtn');
+  btn.disabled = true;
+  btn.textContent = 'アップロード中...';
+
+  fetch(`${API_BASE_URL}/notebooks`, {
+    method: 'POST',
+    body: formData
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) throw new Error(data.error);
+      titleInput.value = '';
+      fileInput.value = '';
+      fetchNotebooks();
+    })
+    .catch(err => {
+      console.error('アップロードエラー:', err);
+      alert('アップロードに失敗しました: ' + err.message);
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.textContent = 'アップロード';
+    });
+}
+
+function updateNotebookUI() {
+  const viewer = document.getElementById('notebookViewer');
+  const noMessage = document.getElementById('noNotebooksMessage');
+  const contentArea = document.getElementById('noteContentArea');
+  const titleEl = document.getElementById('currentNoteTitle');
+  const indicator = document.getElementById('notePageIndicator');
+  const prevBtn = document.getElementById('prevNoteBtn');
+  const nextBtn = document.getElementById('nextNoteBtn');
+
+  if (notebookState.notes.length === 0) {
+    viewer.style.display = 'none';
+    noMessage.style.display = 'block';
+    return;
+  }
+
+  viewer.style.display = 'flex';
+  noMessage.style.display = 'none';
+
+  const current = notebookState.notes[notebookState.currentIndex];
+  titleEl.textContent = current.title;
+  indicator.textContent = `${notebookState.currentIndex + 1} / ${notebookState.notes.length}`;
+
+  // コンテンツ表示 (画像 or PDF)
+  contentArea.innerHTML = '';
+  if (current.file_type.includes('pdf')) {
+    const iframe = document.createElement('iframe');
+    iframe.src = `${API_BASE_URL}/uploads/${current.file_name}`;
+    contentArea.appendChild(iframe);
+  } else {
+    const img = document.createElement('img');
+    img.src = `${API_BASE_URL}/uploads/${current.file_name}`;
+    img.alt = current.title;
+    contentArea.appendChild(img);
+  }
+
+  // ボタンの状態
+  prevBtn.disabled = notebookState.currentIndex === 0;
+  nextBtn.disabled = notebookState.currentIndex === notebookState.notes.length - 1;
+
+  // モバイル用のボタン状態
+  const mobilePrev = document.querySelector('.nav-btn-mobile.prev');
+  const mobileNext = document.querySelector('.nav-btn-mobile.next');
+  if (mobilePrev) mobilePrev.disabled = notebookState.currentIndex === 0;
+  if (mobileNext) mobileNext.disabled = notebookState.currentIndex === notebookState.notes.length - 1;
+}
+
+function nextNote() {
+  if (notebookState.currentIndex < notebookState.notes.length - 1) {
+    notebookState.currentIndex++;
+    updateNotebookUI();
+  }
+}
+
+function prevNote() {
+  if (notebookState.currentIndex > 0) {
+    notebookState.currentIndex--;
+    updateNotebookUI();
+  }
+}
+
+function deleteCurrentNote() {
+  if (!confirm('このノートを削除してもよろしいですか？')) return;
+
+  const current = notebookState.notes[notebookState.currentIndex];
+  fetch(`${API_BASE_URL}/notebooks/${current.id}`, {
+    method: 'DELETE'
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        fetchNotebooks();
+      }
+    })
+    .catch(err => console.error('削除エラー:', err));
+}
