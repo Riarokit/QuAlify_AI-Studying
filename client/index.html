@@ -146,10 +146,28 @@
             <strong class="section-title">タグ選択：</strong>
             <div id="dojoTagCheckboxes"></div>
           </div>
-          <div class="dojo-setting-row" style="margin-top:12px;">
-            <label class="section-title">最大出題数：</label>
-            <input type="number" id="dojoMaxQuestions" min="1" placeholder="未入力で全て"
-              style="width:100px; padding:4px 8px;" title="空欄の場合は該当単語を全て出題">
+          <div class="dojo-setting-row" style="margin-top:12px; display: flex; gap: 20px; flex-wrap: wrap;">
+            <div>
+              <label class="section-title">最大出題数：</label>
+              <input type="number" id="dojoMaxQuestions" min="1" placeholder="未入力で全て"
+                style="width:80px; padding:4px 8px;" title="空欄の場合は該当単語を全て出題">
+            </div>
+            <div>
+              <label class="section-title">タイマー：</label>
+              <select id="dojoTimerSetting" style="padding:4px 8px;">
+                <option value="0">無効</option>
+                <option value="15">15秒</option>
+                <option value="30">30秒</option>
+                <option value="60">60秒</option>
+              </select>
+            </div>
+            <div>
+              <label class="section-title">出題順：</label>
+              <select id="dojoOrderSetting" style="padding:4px 8px;">
+                <option value="random">ランダム</option>
+                <option value="weak">弱点優先</option>
+              </select>
+            </div>
           </div>
           <div class="dojo-setting-row" style="margin-top:12px;">
             <button id="dojoStartBtn">出題開始</button>
@@ -158,6 +176,16 @@
         </div>
 
         <div id="dojoArea" class="dojo-layout">
+          <!-- ストリークとタイマーの表示 -->
+          <div class="dojo-status-bar" style="display: none;" id="dojoStatusBar">
+            <div class="dojo-streak-display">
+              <i class="fas fa-fire"></i> Streak: <span id="dojoStreakValue">0</span>
+            </div>
+            <div class="dojo-timer-display" id="dojoTimerWrapper">
+              <i class="fas fa-clock"></i> Time: <span id="dojoTimerValue">--</span>s
+            </div>
+          </div>
+
           <!-- 縦並び：問題 → 解説 → フィードバック（スマホでも見やすい） -->
           <section class="dojo-section dojo-question-section">
             <h3 class="dojo-section-title">問題</h3>

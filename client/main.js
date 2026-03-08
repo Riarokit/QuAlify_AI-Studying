@@ -673,7 +673,11 @@ const dojoState = {
   remaining: [],      // 出題済みを除外したプール
   currentTerm: null,
   presented: 0,
-  correct: 0
+  correct: 0,
+  streak: 0,          // ストリーク
+  timerInterval: null, // タイマー用
+  timeLimit: 0,       // 設定された制限時間
+  remainingTime: 0    // 残り時間
 };
 
 function populateDojoTagCheckboxes() {
@@ -726,18 +730,33 @@ function startDojo() {
       const pool = terms.filter(t => selectedTags.includes(t.tag));
       if (!pool || pool.length === 0) return alert('該当する単語が見つかりません');
 
+      // 出題順の設定（ランダム or 弱点優先）
+      const orderSetting = document.getElementById('dojoOrderSetting').value;
+      let finalPool = [...pool];
+      if (orderSetting === 'weak') {
+        // 習熟度が低い順にソート
+        finalPool.sort((a, b) => a.proficiency - b.proficiency);
+      } else {
+        // ランダムシャッフル
+        finalPool = shuffleArray(finalPool);
+      }
+
       // 最大出題数（未入力・0なら全て）
       const maxInput = document.getElementById('dojoMaxQuestions');
       const maxNum = maxInput && maxInput.value.trim() !== '' ? parseInt(maxInput.value, 10) : 0;
-      const limit = (maxNum > 0) ? Math.min(maxNum, pool.length) : pool.length;
-      const shuffled = shuffleArray([...pool]);
-      const remainingPool = shuffled.slice(0, limit);
+      const limit = (maxNum > 0) ? Math.min(maxNum, finalPool.length) : finalPool.length;
+      const remainingPool = finalPool.slice(0, limit);
+
+      // タイマー設定
+      const timerVal = parseInt(document.getElementById('dojoTimerSetting').value, 10);
+      dojoState.timeLimit = timerVal;
 
       dojoState.active = true;
       dojoState.candidates = remainingPool;
       dojoState.remaining = [...remainingPool];
       dojoState.presented = 0;
       dojoState.correct = 0;
+      dojoState.streak = 0;
 
       document.getElementById('dojoExitBtn').style.display = 'inline-block';
       document.getElementById('dojoStartBtn').style.display = 'none'; // 入場中は出題開始を非表示
@@ -746,6 +765,11 @@ function startDojo() {
       document.getElementById('dojoExplanationArea').innerHTML = '';
       document.getElementById('dojoFeedbackButtons').style.display = 'none';
       document.getElementById('dojoSummary').style.display = 'none';
+
+      // ステータスバーを表示
+      document.getElementById('dojoStatusBar').style.display = 'flex';
+      document.getElementById('dojoStreakValue').textContent = '0';
+      updateDojoTimerDisplay();
 
       presentDojoQuestion();
     })
@@ -757,6 +781,9 @@ function startDojo() {
 
 function presentDojoQuestion() {
   if (!dojoState.active) return;
+
+  // タイマー停止
+  stopDojoTimer();
 
   // 出題済みプールが空になったら終了
   if (!dojoState.remaining || dojoState.remaining.length === 0) {
@@ -772,6 +799,7 @@ function presentDojoQuestion() {
   document.getElementById('dojoQuestionArea').style.display = 'none';
   document.getElementById('dojoQuestionArea').innerHTML = '';
   document.getElementById('dojoShowExplanationBtn').style.display = 'none';
+  document.getElementById('dojoStatusBar').style.display = 'flex'; // ステータスバーは出題中表示
 
   // ランダムで1つ取り出す
   const idx = Math.floor(Math.random() * dojoState.remaining.length);
@@ -809,6 +837,9 @@ function presentDojoQuestion() {
 
       // 問題が表示されたタイミングで解説ボタンを表示
       document.getElementById('dojoShowExplanationBtn').style.display = 'inline-block';
+
+      // タイマー開始
+      startDojoTimer();
     })
     .catch(err => {
       console.error('presentDojoQuestionエラー:', err);
@@ -829,6 +860,9 @@ function presentDojoQuestion() {
 function showDojoExplanation() {
   if (!dojoState.currentExplanation) return;
 
+  // 解説を読む間はタイマーを止める
+  stopDojoTimer();
+
   const expArea = document.getElementById('dojoExplanationArea');
   expArea.innerHTML = renderMarkdownToHTML(dojoState.currentExplanation);
 
@@ -836,16 +870,33 @@ function showDojoExplanation() {
   document.getElementById('dojoFeedbackButtons').style.display = 'block';
 }
 
-function markDojoAnswer(isCorrect) {
+function markDojoAnswer(isCorrect, isTimeout = false) {
   if (!dojoState.currentTerm) return;
+
+  // タイマー停止
+  stopDojoTimer();
 
   if (isCorrect) {
     dojoState.correct += 1;
+    dojoState.streak += 1;
     // 習熟度を+10
     updateProficiency(dojoState.currentTerm.id, 10, dojoState.currentTerm.word, dojoState.currentTerm.tag, 'correct');
   } else {
+    dojoState.streak = 0;
     // 習熟度を-10
     updateProficiency(dojoState.currentTerm.id, -10, dojoState.currentTerm.word, dojoState.currentTerm.tag, 'wrong');
+  }
+
+  // ストリーク表示更新
+  document.getElementById('dojoStreakValue').textContent = dojoState.streak;
+  if (dojoState.streak >= 5) {
+    document.getElementById('dojoStreakValue').classList.add('streak-hot');
+  } else {
+    document.getElementById('dojoStreakValue').classList.remove('streak-hot');
+  }
+
+  if (isTimeout) {
+    alert('Time Up! 不正解となります。');
   }
 
   // ローディング表示
@@ -860,6 +911,7 @@ function markDojoAnswer(isCorrect) {
 
 function endDojo() {
   dojoState.active = false;
+  stopDojoTimer();
 
   // 画面要素のリセット（退場後は出題開始を再表示）
   document.getElementById('dojoLoadingSpinner').style.display = 'none';
@@ -869,6 +921,7 @@ function endDojo() {
   document.getElementById('dojoFeedbackButtons').style.display = 'none';
   document.getElementById('dojoQuestionArea').innerHTML = '';
   document.getElementById('dojoExplanationArea').innerHTML = '';
+  document.getElementById('dojoStatusBar').style.display = 'none';
 
   const stats = {
     presented: dojoState.presented,
@@ -1034,6 +1087,50 @@ function renderDistChart(dist) {
       },
     },
   });
+}
+
+// タイマー制御関連
+function startDojoTimer() {
+  if (dojoState.timeLimit <= 0) {
+    document.getElementById('dojoTimerWrapper').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('dojoTimerWrapper').style.display = 'block';
+  dojoState.remainingTime = dojoState.timeLimit;
+  updateDojoTimerDisplay();
+
+  dojoState.timerInterval = setInterval(() => {
+    dojoState.remainingTime--;
+    updateDojoTimerDisplay();
+
+    if (dojoState.remainingTime <= 0) {
+      stopDojoTimer();
+      markDojoAnswer(false, true); // タイムアップ
+    }
+  }, 1000);
+}
+
+function stopDojoTimer() {
+  if (dojoState.timerInterval) {
+    clearInterval(dojoState.timerInterval);
+    dojoState.timerInterval = null;
+  }
+}
+
+function updateDojoTimerDisplay() {
+  const el = document.getElementById('dojoTimerValue');
+  if (el) {
+    el.textContent = dojoState.remainingTime > 0 ? dojoState.remainingTime : (dojoState.timeLimit || '--');
+    // 5秒以下で警告色
+    if (dojoState.remainingTime > 0 && dojoState.remainingTime <= 5) {
+      el.style.color = 'var(--danger-color)';
+      el.style.fontWeight = '700';
+    } else {
+      el.style.color = '';
+      el.style.fontWeight = '';
+    }
+  }
 }
 
 window.onload = () => {
