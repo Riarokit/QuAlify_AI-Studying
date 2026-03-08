@@ -126,8 +126,8 @@ router.patch('/:id/proficiency', (req, res) => {
   const logWord = word || current.word;
   const logTag = tag || current.tag || '';
   db.prepare(`
-    INSERT INTO study_logs (term_id, word, tag, result, proficiency_before, proficiency_after)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO study_logs (term_id, word, tag, result, proficiency_before, proficiency_after, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, datetime('now', '+9 hours'))
   `).run(parseInt(id), logWord, logTag, logResult, current.proficiency, newProficiency);
 
   res.json({ success: true });

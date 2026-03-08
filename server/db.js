@@ -14,7 +14,6 @@ const db = new Database(dbPath);
 
 // テーブルがなければ作成
 db.exec(`
-
   CREATE TABLE IF NOT EXISTS terms (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     word TEXT NOT NULL UNIQUE,
@@ -37,7 +36,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     prompt_id INTEGER NOT NULL,
     message TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+9 hours')),
     FOREIGN KEY (prompt_id) REFERENCES prompts(id)
   );
 
@@ -49,7 +48,7 @@ db.exec(`
     result TEXT NOT NULL,
     proficiency_before INTEGER,
     proficiency_after INTEGER,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+9 hours'))
   );
 `);
 
@@ -69,6 +68,5 @@ const exists = db.prepare('SELECT * FROM settings WHERE key = ?').get('current_p
 if (!exists) {
   db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('current_prompt_id', '1');
 }
-
 
 module.exports = db;

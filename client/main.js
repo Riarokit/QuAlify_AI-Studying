@@ -981,7 +981,7 @@ function renderDailyChart(rows) {
   const totalData = [];
   const correctData = [];
   for (let i = 13; i >= 0; i--) {
-    const d = new Date();
+    const d = new Date(Date.now() + 9 * 60 * 60 * 1000);
     d.setDate(d.getDate() - i);
     const key = d.toISOString().slice(0, 10);
     const found = rows.find(r => r.day === key);
